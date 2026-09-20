@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#071014" />
-  <meta name="description" content="追踪 Nintendo Switch 日服销量榜与 PS5 港服折扣价格。" />
+  <meta name="description" content="追踪 Nintendo Switch 日服、Steam 中国区热销榜与 PS5 港服折扣价格。" />
   <title>GAME PULSE · 主机游戏价格雷达</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,10 +33,10 @@
   <main class="shell">
     <section class="intro">
       <div>
-        <p class="eyebrow">CONSOLE MARKET WATCH</p>
+        <p class="eyebrow">GAME MARKET WATCH</p>
         <h1>主机游戏<span>价格雷达</span></h1>
       </div>
-      <p class="intro-copy">一眼掌握 Nintendo 日服热卖榜与 PlayStation 港服折扣。价格仅供参考，结算请以官方商店为准。</p>
+      <p class="intro-copy">一眼掌握 Nintendo 日服、Steam 中国区热销榜与 PlayStation 港服折扣。价格仅供参考，结算请以官方商店为准。</p>
     </section>
 
     <section class="overview" aria-label="数据概览">
@@ -46,6 +46,7 @@
           <button class="platform-tab active" data-platform="switch1" role="tab" aria-selected="true"><span class="switch-glyph">◐</span>Switch 1</button>
           <button class="platform-tab" data-platform="switch2" role="tab" aria-selected="false"><span class="switch-glyph">◑</span>Switch 2</button>
           <button class="platform-tab" data-platform="ps5" role="tab" aria-selected="false"><span class="ps-glyph">△○×□</span>PS5</button>
+          <button class="platform-tab" data-platform="steam" role="tab" aria-selected="false"><span class="steam-glyph">●</span>Steam CN</button>
         </div>
       </article>
       <article class="metric">
@@ -131,14 +132,16 @@
           <ul>
             <li><i></i><span>Nintendo 日服<small>销量榜 · 日元价格</small></span></li>
             <li><i class="blue"></i><span>PlayStation 港服<small>PS5 · 港币折扣价</small></span></li>
+            <li><i class="steam"></i><span>Steam 中国区<small>官方热销 · 前 50 条</small></span></li>
           </ul>
-          <p>刷新会同时获取最新汇率并重新计算人民币估价；接入正式商店接口后可自动同步商品价格。</p>
+          <p>Steam 中国区价格已是人民币。PS5 港服商品目录可分页记录 50 款以上，但官方未公开固定“销量前 50”接口，因此按价格与折扣监测呈现。</p>
         </article>
       </aside>
     </section>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"><span>✓</span><div><b>刷新完成</b><small>榜单与价格已更新</small></div></div>
+  <script src="steam-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
