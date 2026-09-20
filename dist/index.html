@@ -54,6 +54,7 @@
       <article class="metric accent-metric">
         <span class="metric-label">今日最低价</span>
         <strong id="lowestPrice">¥ 500</strong>
+        <small class="cny-summary" id="lowestCny">正在换算人民币…</small>
       </article>
       <article class="metric">
         <span class="metric-label">自动刷新</span>
@@ -116,13 +117,21 @@
           <div><span>平均价格</span><strong id="averagePrice">¥ 4,982</strong></div>
           <div><span>有折扣</span><strong id="discountedCount">6 <small>款</small></strong></div>
         </article>
+        <article class="insight-card rate-card">
+          <div class="source-head"><span>实时汇率</span><span class="source-badge rate-badge" id="rateBadge">连接中</span></div>
+          <div class="rate-live">
+            <span class="live-dot"></span>
+            <div><strong id="rateValue">1 JPY = — CNY</strong><small id="rateUpdated">正在获取最新汇率…</small></div>
+          </div>
+          <p>人民币为实时估算价，支付金额可能受发卡行汇率及手续费影响。</p>
+        </article>
         <article class="insight-card source-card">
           <div class="source-head"><span>数据源状态</span><span class="source-badge">预览数据</span></div>
           <ul>
             <li><i></i><span>Nintendo 日服<small>销量榜 · 日元价格</small></span></li>
             <li><i class="blue"></i><span>PlayStation 港服<small>PS5 · 港币折扣价</small></span></li>
           </ul>
-          <p>刷新会重新计算榜单快照；接入正式接口后可自动同步官方商店数据。</p>
+          <p>刷新会同时获取最新汇率并重新计算人民币估价；接入正式商店接口后可自动同步商品价格。</p>
         </article>
       </aside>
     </section>
