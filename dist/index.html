@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#071014" />
+  <meta name="description" content="追踪 Nintendo Switch 日服销量榜与 PS5 港服折扣价格。" />
+  <title>GAME PULSE · 主机游戏价格雷达</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23071014'/%3E%3Cpath d='M7 12h18l2 10-5 2-3-4h-6l-3 4-5-2z' fill='%238ef0d4'/%3E%3Cpath d='M10 15v4m-2-2h4' stroke='%23071014' stroke-width='1.8'/%3E%3Ccircle cx='22' cy='16' r='1.2' fill='%23071014'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="GAME PULSE 首页">
+      <span class="brand-mark"><i></i><i></i></span>
+      <span>GAME <b>PULSE</b></span>
+    </a>
+    <div class="status-line">
+      <span class="live-dot"></span>
+      <span id="sourceStatus">数据已就绪</span>
+      <span class="separator">/</span>
+      <span id="lastUpdated">刚刚更新</span>
+    </div>
+    <button class="refresh-button" id="refreshButton" type="button" aria-label="立即刷新数据">
+      <span class="refresh-icon">↻</span><span>立即刷新</span>
+    </button>
+  </header>
+
+  <main class="shell">
+    <section class="intro">
+      <div>
+        <p class="eyebrow">CONSOLE MARKET WATCH</p>
+        <h1>主机游戏<span>价格雷达</span></h1>
+      </div>
+      <p class="intro-copy">一眼掌握 Nintendo 日服热卖榜与 PlayStation 港服折扣。价格仅供参考，结算请以官方商店为准。</p>
+    </section>
+
+    <section class="overview" aria-label="数据概览">
+      <article class="metric metric-wide">
+        <span class="metric-label">当前平台</span>
+        <div class="platform-switch" role="tablist" aria-label="平台筛选">
+          <button class="platform-tab active" data-platform="switch" role="tab" aria-selected="true"><span class="switch-glyph">◐</span>Nintendo</button>
+          <button class="platform-tab" data-platform="ps5" role="tab" aria-selected="false"><span class="ps-glyph">△○×□</span>PlayStation</button>
+        </div>
+      </article>
+      <article class="metric">
+        <span class="metric-label">收录游戏</span>
+        <strong id="gameCount">12</strong><small>款</small>
+      </article>
+      <article class="metric accent-metric">
+        <span class="metric-label">今日最低价</span>
+        <strong id="lowestPrice">¥ 500</strong>
+      </article>
+      <article class="metric">
+        <span class="metric-label">自动刷新</span>
+        <div class="auto-refresh">
+          <button id="autoToggle" class="toggle active" role="switch" aria-checked="true"><span></span></button>
+          <select id="intervalSelect" aria-label="自动刷新间隔">
+            <option value="5">每 5 分钟</option>
+            <option value="15" selected>每 15 分钟</option>
+            <option value="30">每 30 分钟</option>
+            <option value="60">每 1 小时</option>
+          </select>
+        </div>
+      </article>
+    </section>
+
+    <section class="toolbar">
+      <div class="subtabs" role="tablist" aria-label="榜单类型">
+        <button class="subtab active" data-view="ranking">销量排行</button>
+        <button class="subtab" data-view="deals">折扣雷达 <span id="dealBadge">6</span></button>
+      </div>
+      <div class="tools">
+        <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="搜索游戏…" autocomplete="off" /></label>
+        <select id="sortSelect" aria-label="排序方式">
+          <option value="rank">按排名</option>
+          <option value="priceAsc">价格从低到高</option>
+          <option value="discount">折扣力度</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="table-card">
+        <div class="table-heading">
+          <div>
+            <p class="section-kicker" id="tableKicker">NINTENDO eSHOP · 日本</p>
+            <h2 id="tableTitle">Switch 1 / 2 数字版销量榜</h2>
+          </div>
+          <span class="region-pill" id="regionPill">JP · JPY</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th class="rank-col">排名</th><th>游戏</th><th>平台</th><th>价格</th><th>变动 / 折扣</th><th></th></tr></thead>
+            <tbody id="gameRows"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty-state" hidden>
+          <span>⌁</span><h3>没有找到游戏</h3><p>换个关键词试试看。</p>
+        </div>
+        <footer class="table-footer"><span id="resultSummary">显示 12 款游戏</span><span>下次刷新 <b id="countdown">14:59</b></span></footer>
+      </div>
+
+      <aside class="insights">
+        <article class="insight-card best-deal">
+          <div class="insight-top"><span>本期最大折扣</span><span class="spark">✦</span></div>
+          <strong id="bestDiscount">-75%</strong>
+          <h3 id="bestDealName">MONSTER HUNTER RISE</h3>
+          <p id="bestDealPrice"><del>¥ 3,990</del> ¥ 998</p>
+        </article>
+        <article class="insight-card split-card">
+          <div><span>平均价格</span><strong id="averagePrice">¥ 4,982</strong></div>
+          <div><span>有折扣</span><strong id="discountedCount">6 <small>款</small></strong></div>
+        </article>
+        <article class="insight-card source-card">
+          <div class="source-head"><span>数据源状态</span><span class="source-badge">预览数据</span></div>
+          <ul>
+            <li><i></i><span>Nintendo 日服<small>销量榜 · 日元价格</small></span></li>
+            <li><i class="blue"></i><span>PlayStation 港服<small>PS5 · 港币折扣价</small></span></li>
+          </ul>
+          <p>刷新会重新计算榜单快照；接入正式接口后可自动同步官方商店数据。</p>
+        </article>
+      </aside>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"><span>✓</span><div><b>刷新完成</b><small>榜单与价格已更新</small></div></div>
+  <script src="app.js"></script>
+</body>
+</html>
