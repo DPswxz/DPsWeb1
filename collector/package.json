@@ -1,0 +1,22 @@
+{
+  "name": "game-pulse-nintendo-collector",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "dev": "node --watch src/server.mjs",
+    "collect": "node src/collect-once.mjs",
+    "snapshot": "node src/export-static.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "cors": "2.8.6",
+    "express": "5.2.1",
+    "playwright": "1.63.0"
+  }
+}

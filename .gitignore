@@ -1,3 +1,14 @@
 .sites-runtime/
 .DS_Store
 Thumbs.db
+collector/node_modules/
+collector/data/
+collector/bin/
+collector/run/
+.env
+.env.*
+!.env.example
+!collector/.env.example
+deploy/data/
+*.log
+collector/snap-compare.mjs

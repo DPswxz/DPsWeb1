@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#071014" />
-  <meta name="description" content="追踪 Nintendo Switch 日服、Steam 中国区热销榜与 PS5 港服折扣价格。" />
-  <title>GAME PULSE · 主机游戏价格雷达</title>
+  <meta name="description" content="追踪 Nintendo Switch 日服与港服、Steam 热销榜及 PlayStation 商店价格。" />
+  <title>GAME PULSE · 游戏价格观测站</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23071014'/%3E%3Cpath d='M7 12h18l2 10-5 2-3-4h-6l-3 4-5-2z' fill='%238ef0d4'/%3E%3Cpath d='M10 15v4m-2-2h4' stroke='%23071014' stroke-width='1.8'/%3E%3Ccircle cx='22' cy='16' r='1.2' fill='%23071014'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=20260928f" />
 </head>
 <body>
   <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
@@ -19,34 +19,38 @@
       <span class="brand-mark"><i></i><i></i></span>
       <span>GAME <b>PULSE</b></span>
     </a>
-    <div class="status-line">
-      <span class="live-dot"></span>
-      <span id="sourceStatus">数据已就绪</span>
-      <span class="separator">/</span>
-      <span id="lastUpdated">刚刚更新</span>
-    </div>
-    <button class="refresh-button" id="refreshButton" type="button" aria-label="立即刷新数据">
-      <span class="refresh-icon">↻</span><span>立即刷新</span>
-    </button>
+    <button class="refresh-button" id="refreshButton" type="button" title="刷新全部平台榜单" aria-label="刷新全部平台榜单"><span class="refresh-icon" aria-hidden="true">↻</span><span>刷新全部</span></button>
   </header>
 
   <main class="shell">
     <section class="intro">
       <div>
         <p class="eyebrow">GAME MARKET WATCH</p>
-        <h1>主机游戏<span>价格雷达</span></h1>
+        <h1>游戏价格<span>观测站</span></h1>
       </div>
-      <p class="intro-copy">一眼掌握 Nintendo 日服、Steam 中国区热销榜与 PlayStation 港服折扣。价格仅供参考，结算请以官方商店为准。</p>
+      <p class="intro-copy">一眼掌握 Nintendo 日服与港服、Steam 中国区与全球热销榜，以及 PlayStation 港服/日服折扣。价格仅供参考，结算请以官方商店为准。</p>
     </section>
 
     <section class="overview" aria-label="数据概览">
       <article class="metric metric-wide">
         <span class="metric-label">当前平台</span>
         <div class="platform-switch" role="tablist" aria-label="平台筛选">
-          <button class="platform-tab active" data-platform="switch1" role="tab" aria-selected="true"><span class="switch-glyph">◐</span>Switch 1</button>
-          <button class="platform-tab" data-platform="switch2" role="tab" aria-selected="false"><span class="switch-glyph">◑</span>Switch 2</button>
-          <button class="platform-tab" data-platform="ps5" role="tab" aria-selected="false"><span class="ps-glyph">△○×□</span>PS5</button>
-          <button class="platform-tab" data-platform="steam" role="tab" aria-selected="false"><span class="steam-glyph">●</span>Steam CN</button>
+          <button class="platform-tab active" data-platform="switch1" role="tab" aria-selected="true">
+            <svg class="plat-icon switch-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M9.34 8.005c0-4.38.01-7.972.023-7.982C9.373.01 10.036 0 10.831 0c1.153 0 1.51.01 1.743.05 1.73.298 3.045 1.6 3.373 3.326.046.242.053.809.053 4.61 0 4.06.005 4.537-.123 4.976-.022.076-.048.15-.08.242a4.14 4.14 0 0 1-3.426 2.767c-.317.033-2.889.046-2.978.013-.05-.02-.053-.752-.053-7.979m4.675.269a1.62 1.62 0 0 0-1.113-1.034 1.61 1.61 0 0 0-1.938 1.073 1.9 1.9 0 0 0-.014.935 1.63 1.63 0 0 0 1.952 1.107c.51-.136.908-.504 1.11-1.028.11-.285.113-.742.003-1.053M3.71 3.317c-.208.04-.526.199-.695.348-.348.301-.52.729-.494 1.232.013.262.03.332.136.544.155.321.39.556.712.715.222.11.278.123.567.133.261.01.354 0 .53-.06.719-.242 1.153-.94 1.03-1.656-.142-.852-.95-1.422-1.786-1.256"/><path d="M3.425.053a4.14 4.14 0 0 0-3.28 3.015C0 3.628-.01 3.956.005 8.3c.01 3.99.014 4.082.08 4.39.368 1.66 1.548 2.844 3.224 3.235.22.05.497.06 2.29.07 1.856.012 2.048.009 2.097-.04.05-.05.053-.69.053-7.94 0-5.374-.01-7.906-.033-7.952-.033-.06-.09-.063-2.03-.06-1.578.004-2.052.014-2.26.05Zm3 14.665-1.35-.016c-1.242-.013-1.375-.02-1.623-.083a2.81 2.81 0 0 1-2.08-2.167c-.074-.335-.074-8.579-.004-8.907a2.85 2.85 0 0 1 1.716-2.05c.438-.176.64-.196 2.058-.2l1.282-.003v13.426Z"/></svg>
+            Switch 1
+          </button>
+          <button class="platform-tab" data-platform="switch2" role="tab" aria-selected="false">
+            <svg class="plat-icon switch2-icon" viewBox="0 0 28 16" fill="currentColor" aria-hidden="true"><g transform="scale(0.85) translate(0, 0.5)"><path d="M9.34 8.005c0-4.38.01-7.972.023-7.982C9.373.01 10.036 0 10.831 0c1.153 0 1.51.01 1.743.05 1.73.298 3.045 1.6 3.373 3.326.046.242.053.809.053 4.61 0 4.06.005 4.537-.123 4.976-.022.076-.048.15-.08.242a4.14 4.14 0 0 1-3.426 2.767c-.317.033-2.889.046-2.978.013-.05-.02-.053-.752-.053-7.979m4.675.269a1.62 1.62 0 0 0-1.113-1.034 1.61 1.61 0 0 0-1.938 1.073 1.9 1.9 0 0 0-.014.935 1.63 1.63 0 0 0 1.952 1.107c.51-.136.908-.504 1.11-1.028.11-.285.113-.742.003-1.053M3.71 3.317c-.208.04-.526.199-.695.348-.348.301-.52.729-.494 1.232.013.262.03.332.136.544.155.321.39.556.712.715.222.11.278.123.567.133.261.01.354 0 .53-.06.719-.242 1.153-.94 1.03-1.656-.142-.852-.95-1.422-1.786-1.256"/><path d="M3.425.053a4.14 4.14 0 0 0-3.28 3.015C0 3.628-.01 3.956.005 8.3c.01 3.99.014 4.082.08 4.39.368 1.66 1.548 2.844 3.224 3.235.22.05.497.06 2.29.07 1.856.012 2.048.009 2.097-.04.05-.05.053-.69.053-7.94 0-5.374-.01-7.906-.033-7.952-.033-.06-.09-.063-2.03-.06-1.578.004-2.052.014-2.26.05Zm3 14.665-1.35-.016c-1.242-.013-1.375-.02-1.623-.083a2.81 2.81 0 0 1-2.08-2.167c-.074-.335-.074-8.579-.004-8.907a2.85 2.85 0 0 1 1.716-2.05c.438-.176.64-.196 2.058-.2l1.282-.003v13.426Z"/></g><path d="M16.5 4.2c0-2.4 1.8-4.2 4.4-4.2 2.6 0 4.3 1.7 4.3 4 0 1.9-1.1 3.2-2.9 4.8l-3.2 2.6h6.4V14H16v-2.2l4.4-3.8c1.3-1.1 2-2 2-3.1 0-1.2-.9-2-2-2-1.2 0-2 .8-2.1 2.1h-1.8z"/></svg>
+            Switch 2
+          </button>
+          <button class="platform-tab" data-platform="ps5" role="tab" aria-selected="false">
+            <svg class="plat-icon ps-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M15.858 11.451c-.313.395-1.079.676-1.079.676l-5.696 2.046v-1.509l4.192-1.493c.476-.17.549-.412.162-.538-.386-.127-1.085-.09-1.56.08l-2.794.984v-1.566l.161-.054s.807-.286 1.942-.412c1.135-.125 2.525.017 3.616.43 1.23.39 1.368.962 1.056 1.356M9.625 8.883v-3.86c0-.453-.083-.87-.508-.988-.326-.105-.528.198-.528.65v9.664l-2.606-.827V2c1.108.206 2.722.692 3.59.985 2.207.757 2.955 1.7 2.955 3.825 0 2.071-1.278 2.856-2.903 2.072Zm-8.424 3.625C-.061 12.15-.271 11.41.304 10.984c.532-.394 1.436-.69 1.436-.69l3.737-1.33v1.515l-2.69.963c-.474.17-.547.411-.161.538.386.126 1.085.09 1.56-.08l1.29-.469v1.356l-.257.043a8.45 8.45 0 0 1-4.018-.323Z"/></svg>
+            PS5
+          </button>
+          <button class="platform-tab" data-platform="steam" role="tab" aria-selected="false">
+            <svg class="plat-icon steam-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M.329 10.333A8.01 8.01 0 0 0 7.99 16C12.414 16 16 12.418 16 8s-3.586-8-8.009-8A8.006 8.006 0 0 0 0 7.468l.003.006 4.304 1.769A2.2 2.2 0 0 1 5.62 8.88l1.96-2.844-.001-.04a3.046 3.046 0 0 1 3.042-3.043 3.046 3.046 0 0 1 3.042 3.043 3.047 3.047 0 0 1-3.111 3.044l-2.804 2a2.223 2.223 0 0 1-3.075 2.11 2.22 2.22 0 0 1-1.312-1.568L.33 10.333Z"/><path d="M4.868 12.683a1.715 1.715 0 0 0 1.318-3.165 1.7 1.7 0 0 0-1.263-.02l1.023.424a1.261 1.261 0 1 1-.97 2.33l-.99-.41a1.7 1.7 0 0 0 .882.84Zm3.726-6.687a2.03 2.03 0 0 0 2.027 2.029 2.03 2.03 0 0 0 2.027-2.029 2.03 2.03 0 0 0-2.027-2.027 2.03 2.03 0 0 0-2.027 2.027m2.03-1.527a1.524 1.524 0 1 1-.002 3.048 1.524 1.524 0 0 1 .002-3.048"/></svg>
+            Steam
+          </button>
         </div>
       </article>
       <article class="metric">
@@ -54,12 +58,17 @@
         <strong id="gameCount">50</strong><small>款 / 榜</small>
       </article>
       <article class="metric accent-metric">
-        <span class="metric-label">今日最低价</span>
-        <strong id="lowestPrice">¥ 500</strong>
-        <small class="cny-summary" id="lowestCny">正在换算人民币…</small>
+        <span class="metric-label">今日折扣率</span>
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+          <strong id="discountRate">-0%</strong>
+          <small id="discountRateSub" style="color:#8da0a6;font-size:12px;font-family:'DM Mono',monospace;white-space:nowrap">共 0 款游戏</small>
+        </div>
       </article>
       <article class="metric">
-        <span class="metric-label">自动刷新</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+          <span class="metric-label" style="margin-bottom:0">自动刷新</span>
+          <span id="sourceTag" class="source-tag" style="font-size:10px;color:var(--mint);background:rgba(142,240,212,.08);padding:1px 6px;border-radius:4px;font-family:'DM Mono',monospace">官方直采</span>
+        </div>
         <div class="auto-refresh">
           <button id="autoToggle" class="toggle active" role="switch" aria-checked="true"><span></span></button>
           <select id="intervalSelect" aria-label="自动刷新间隔">
@@ -69,21 +78,44 @@
             <option value="60">每 1 小时</option>
           </select>
         </div>
+        <small class="cny-summary" id="lastUpdated" title="上次数据源采集更新的具体时间" style="display:block;margin-top:8px;font-size:11px;color:#8da0a6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">来源时间：正在获取…</small>
       </article>
     </section>
 
     <section class="toolbar">
-      <div class="subtabs" role="tablist" aria-label="榜单类型">
-        <button class="subtab active" data-view="ranking">销量排行</button>
-        <button class="subtab" data-view="deals">折扣雷达 <span id="dealBadge">6</span></button>
-      </div>
-      <div class="tools">
-        <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="搜索游戏…" autocomplete="off" /></label>
-        <select id="sortSelect" aria-label="排序方式">
-          <option value="rank">按排名</option>
-          <option value="priceAsc">价格从低到高</option>
-          <option value="discount">折扣力度</option>
-        </select>
+      <div class="toolbar-inner">
+        <button type="button" class="subtab active" id="singleRegionTab" style="display:none;cursor:default;"><span>日服</span></button>
+        <div class="subtabs" id="nintendoStoreTabs" role="tablist" aria-label="Nintendo 商店区域" style="display:none">
+          <button type="button" class="subtab active" data-nintendo-store="jp" role="tab" aria-selected="true">日服</button>
+          <button type="button" class="subtab" data-nintendo-store="hk" role="tab" aria-selected="false">港服</button>
+        </div>
+        <div class="subtabs" id="psStoreTabs" role="tablist" aria-label="PlayStation 商店区域" style="display:none">
+          <button type="button" class="subtab active" data-ps-store="hk" role="tab" aria-selected="true">港服</button>
+          <button type="button" class="subtab" data-ps-store="jp" role="tab" aria-selected="false">日服</button>
+        </div>
+        <div class="subtabs" id="steamRegionTabs" role="tablist" aria-label="Steam 热销榜区域" style="display:none">
+          <button type="button" class="subtab active" data-steam-region="cn" role="tab" aria-selected="true">中国区</button>
+          <button type="button" class="subtab" data-steam-region="global" role="tab" aria-selected="false">全球</button>
+        </div>
+        <div class="tools">
+          <button type="button" id="includePs4Btn" class="ps4-filter-btn" aria-pressed="false" title="切换是否包含仅支持 PS4 的游戏" style="display:none">
+            <span>包含 PS4</span>
+          </button>
+          <button type="button" id="includeFreeDealsBtn" class="deal-filter-btn" aria-pressed="false" title="仅显示免费游戏和 Demo 游戏">
+            <span>免费游戏</span>
+            <span id="freeDealsBadge" class="deal-count-badge">0</span>
+          </button>
+          <button type="button" id="dealToggleBtn" class="deal-filter-btn" aria-pressed="false" title="点击仅显示有折扣的游戏">
+            <span>仅看折扣</span>
+            <span id="dealBadge" class="deal-count-badge">0</span>
+          </button>
+          <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="搜索游戏…" autocomplete="off" /></label>
+          <select id="sortSelect" aria-label="排序方式">
+            <option value="rank">按排名</option>
+            <option value="priceAsc">价格从低到高</option>
+            <option value="discount">折扣力度</option>
+          </select>
+        </div>
       </div>
     </section>
 
@@ -98,14 +130,14 @@
         </div>
         <div class="table-scroll">
           <table>
-            <thead><tr><th class="rank-col">排名</th><th>游戏</th><th>平台</th><th>价格</th><th>变动 / 折扣</th><th></th></tr></thead>
+            <thead><tr><th class="rank-col">排名</th><th>游戏</th><th>平台</th><th>价格</th><th class="col-history">历史价格</th><th></th></tr></thead>
             <tbody id="gameRows"></tbody>
           </table>
         </div>
         <div id="emptyState" class="empty-state" hidden>
           <span>⌁</span><h3>没有找到游戏</h3><p>换个关键词试试看。</p>
         </div>
-        <footer class="table-footer"><span id="resultSummary">显示 12 款游戏</span><span>下次刷新 <b id="countdown">14:59</b></span></footer>
+        <footer class="table-footer"><span id="resultSummary">显示 12 款游戏</span><span class="pagination" aria-label="榜单分页"><button type="button" id="pagePrev" class="page-button" aria-label="上一页">‹</button><b id="pageInfo">1 / 1</b><button type="button" id="pageNext" class="page-button" aria-label="下一页">›</button></span><span>上次来源 <b id="footerSourceTime">—</b> · 下次刷新 <b id="countdown">14:59</b></span></footer>
       </div>
 
       <aside class="insights">
@@ -120,28 +152,138 @@
           <div><span>有折扣</span><strong id="discountedCount">6 <small>款</small></strong></div>
         </article>
         <article class="insight-card rate-card">
-          <div class="source-head"><span>实时汇率</span><span class="source-badge rate-badge" id="rateBadge">连接中</span></div>
+          <div class="source-head"><span id="rateCardTitle">实时汇率</span><span class="source-badge rate-badge" id="rateBadge">连接中</span></div>
           <div class="rate-live">
             <span class="live-dot"></span>
             <div><strong id="rateValue">1 JPY = — CNY</strong><small id="rateUpdated">正在获取最新汇率…</small></div>
           </div>
-          <p>人民币为实时估算价，支付金额可能受发卡行汇率及手续费影响。</p>
+          <p id="rateCardNote">人民币为实时估算价，支付金额可能受发卡行汇率及手续费影响。</p>
         </article>
         <article class="insight-card source-card">
-          <div class="source-head"><span>数据源状态</span><span class="source-badge">预览数据</span></div>
+          <div class="source-head"><span>数据源状态</span><span class="source-badge source-live-badge">官方直采</span></div>
           <ul>
-            <li><i></i><span>Nintendo 日服<small>销量榜 · 日元价格</small></span></li>
-            <li><i class="blue"></i><span>PlayStation 港服<small>PS5 · 港币折扣价</small></span></li>
-            <li><i class="steam"></i><span>Steam 中国区<small>官方热销 · 前 50 条</small></span></li>
+            <li>
+              <svg class="source-icon switch-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M9.34 8.005c0-4.38.01-7.972.023-7.982C9.373.01 10.036 0 10.831 0c1.153 0 1.51.01 1.743.05 1.73.298 3.045 1.6 3.373 3.326.046.242.053.809.053 4.61 0 4.06.005 4.537-.123 4.976-.022.076-.048.15-.08.242a4.14 4.14 0 0 1-3.426 2.767c-.317.033-2.889.046-2.978.013-.05-.02-.053-.752-.053-7.979m4.675.269a1.62 1.62 0 0 0-1.113-1.034 1.61 1.61 0 0 0-1.938 1.073 1.9 1.9 0 0 0-.014.935 1.63 1.63 0 0 0 1.952 1.107c.51-.136.908-.504 1.11-1.028.11-.285.113-.742.003-1.053M3.71 3.317c-.208.04-.526.199-.695.348-.348.301-.52.729-.494 1.232.013.262.03.332.136.544.155.321.39.556.712.715.222.11.278.123.567.133.261.01.354 0 .53-.06.719-.242 1.153-.94 1.03-1.656-.142-.852-.95-1.422-1.786-1.256"/><path d="M3.425.053a4.14 4.14 0 0 0-3.28 3.015C0 3.628-.01 3.956.005 8.3c.01 3.99.014 4.082.08 4.39.368 1.66 1.548 2.844 3.224 3.235.22.05.497.06 2.29.07 1.856.012 2.048.009 2.097-.04.05-.05.053-.69.053-7.94 0-5.374-.01-7.906-.033-7.952-.033-.06-.09-.063-2.03-.06-1.578.004-2.052.014-2.26.05Zm3 14.665-1.35-.016c-1.242-.013-1.375-.02-1.623-.083a2.81 2.81 0 0 1-2.08-2.167c-.074-.335-.074-8.579-.004-8.907a2.85 2.85 0 0 1 1.716-2.05c.438-.176.64-.196 2.058-.2l1.282-.003v13.426Z"/></svg>
+              <span class="source-copy">Nintendo 日服<small>Switch 1 / Switch 2 · 官方下载榜</small></span>
+              <span class="source-actions">
+                <a class="source-external" href="https://store-jp.nintendo.com/software/ranking/switch/" target="_blank" rel="noopener" aria-label="打开 Nintendo Switch 1 日服官方榜单" title="Switch 1 官方榜单">1↗</a>
+                <a class="source-external" href="https://store-jp.nintendo.com/software/ranking/switch2/" target="_blank" rel="noopener" aria-label="打开 Nintendo Switch 2 日服官方榜单" title="Switch 2 官方榜单">2↗</a>
+              </span>
+            </li>
+            <li>
+              <svg class="source-icon switch-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M9.34 8.005c0-4.38.01-7.972.023-7.982C9.373.01 10.036 0 10.831 0c1.153 0 1.51.01 1.743.05 1.73.298 3.045 1.6 3.373 3.326.046.242.053.809.053 4.61 0 4.06.005 4.537-.123 4.976-.022.076-.048.15-.08.242a4.14 4.14 0 0 1-3.426 2.767c-.317.033-2.889.046-2.978.013-.05-.02-.053-.752-.053-7.979m4.675.269a1.62 1.62 0 0 0-1.113-1.034 1.61 1.61 0 0 0-1.938 1.073 1.9 1.9 0 0 0-.014.935 1.63 1.63 0 0 0 1.952 1.107c.51-.136.908-.504 1.11-1.028.11-.285.113-.742.003-1.053M3.71 3.317c-.208.04-.526.199-.695.348-.348.301-.52.729-.494 1.232.013.262.03.332.136.544.155.321.39.556.712.715.222.11.278.123.567.133.261.01.354 0 .53-.06.719-.242 1.153-.94 1.03-1.656-.142-.852-.95-1.422-1.786-1.256"/><path d="M3.425.053a4.14 4.14 0 0 0-3.28 3.015C0 3.628-.01 3.956.005 8.3c.01 3.99.014 4.082.08 4.39.368 1.66 1.548 2.844 3.224 3.235.22.05.497.06 2.29.07 1.856.012 2.048.009 2.097-.04.05-.05.053-.69.053-7.94 0-5.374-.01-7.906-.033-7.952-.033-.06-.09-.063-2.03-.06-1.578.004-2.052.014-2.26.05Zm3 14.665-1.35-.016c-1.242-.013-1.375-.02-1.623-.083a2.81 2.81 0 0 1-2.08-2.167c-.074-.335-.074-8.579-.004-8.907a2.85 2.85 0 0 1 1.716-2.05c.438-.176.64-.196 2.058-.2l1.282-.003v13.426Z"/></svg>
+              <span class="source-copy">Nintendo 港服<small>Switch 1 / Switch 2 · 官方排行榜</small></span>
+              <span class="source-actions">
+                <a class="source-external" href="https://store.nintendo.com.hk/digital-games/charts?platform=switch" target="_blank" rel="noopener" aria-label="打开 Nintendo Switch 1 港服官方榜单" title="Switch 1 港服榜单">1↗</a>
+                <a class="source-external" href="https://store.nintendo.com.hk/digital-games/charts?platform=switch2" target="_blank" rel="noopener" aria-label="打开 Nintendo Switch 2 港服官方榜单" title="Switch 2 港服榜单">2↗</a>
+              </span>
+            </li>
+            <li>
+              <svg class="source-icon ps-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M15.858 11.451c-.313.395-1.079.676-1.079.676l-5.696 2.046v-1.509l4.192-1.493c.476-.17.549-.412.162-.538-.386-.127-1.085-.09-1.56.08l-2.794.984v-1.566l.161-.054s.807-.286 1.942-.412c1.135-.125 2.525.017 3.616.43 1.23.39 1.368.962 1.056 1.356M9.625 8.883v-3.86c0-.453-.083-.87-.508-.988-.326-.105-.528.198-.528.65v9.664l-2.606-.827V2c1.108.206 2.722.692 3.59.985 2.207.757 2.955 1.7 2.955 3.825 0 2.071-1.278 2.856-2.903 2.072Zm-8.424 3.625C-.061 12.15-.271 11.41.304 10.984c.532-.394 1.436-.69 1.436-.69l3.737-1.33v1.515l-2.69.963c-.474.17-.547.411-.161.538.386.126 1.085.09 1.56-.08l1.29-.469v1.356l-.257.043a8.45 8.45 0 0 1-4.018-.323Z"/></svg>
+              <span class="source-copy">PlayStation 港服<small>商店浏览顺序 · 港币价格</small></span>
+              <a class="source-external" href="https://store.playstation.com/zh-hant-hk/pages/browse" target="_blank" rel="noopener" aria-label="打开 PlayStation 港服官方浏览页" title="PlayStation 港服官方浏览页">↗</a>
+            </li>
+            <li>
+              <svg class="source-icon ps-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M15.858 11.451c-.313.395-1.079.676-1.079.676l-5.696 2.046v-1.509l4.192-1.493c.476-.17.549-.412.162-.538-.386-.127-1.085-.09-1.56.08l-2.794.984v-1.566l.161-.054s.807-.286 1.942-.412c1.135-.125 2.525.017 3.616.43 1.23.39 1.368.962 1.056 1.356M9.625 8.883v-3.86c0-.453-.083-.87-.508-.988-.326-.105-.528.198-.528.65v9.664l-2.606-.827V2c1.108.206 2.722.692 3.59.985 2.207.757 2.955 1.7 2.955 3.825 0 2.071-1.278 2.856-2.903 2.072Zm-8.424 3.625C-.061 12.15-.271 11.41.304 10.984c.532-.394 1.436-.69 1.436-.69l3.737-1.33v1.515l-2.69.963c-.474.17-.547.411-.161.538.386.126 1.085.09 1.56-.08l1.29-.469v1.356l-.257.043a8.45 8.45 0 0 1-4.018-.323Z"/></svg>
+              <span class="source-copy">PlayStation 日服<small>商店浏览列表 · 日元价格</small></span>
+              <a class="source-external" href="https://store.playstation.com/ja-jp/pages/browse" target="_blank" rel="noopener" aria-label="打开 PlayStation 日服官方浏览页" title="PlayStation 日服官方浏览页">↗</a>
+            </li>
+            <li>
+              <svg class="source-icon steam-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M.329 10.333A8.01 8.01 0 0 0 7.99 16C12.414 16 16 12.418 16 8s-3.586-8-8.009-8A8.006 8.006 0 0 0 0 7.468l.003.006 4.304 1.769A2.2 2.2 0 0 1 5.62 8.88l1.96-2.844-.001-.04a3.046 3.046 0 0 1 3.042-3.043 3.046 3.046 0 0 1 3.042 3.043 3.047 3.047 0 0 1-3.111 3.044l-2.804 2a2.223 2.223 0 0 1-3.075 2.11 2.22 2.22 0 0 1-1.312-1.568L.33 10.333Z"/><path d="M4.868 12.683a1.715 1.715 0 0 0 1.318-3.165 1.7 1.7 0 0 0-1.263-.02l1.023.424a1.261 1.261 0 1 1-.97 2.33l-.99-.41a1.7 1.7 0 0 0 .882.84Zm3.726-6.687a2.03 2.03 0 0 0 2.027 2.029 2.03 2.03 0 0 0 2.027-2.029 2.03 2.03 0 0 0-2.027-2.027 2.03 2.03 0 0 0-2.027 2.027m2.03-1.527a1.524 1.524 0 1 1-.002 3.048 1.524 1.524 0 0 1 .002-3.048"/></svg>
+              <span class="source-copy">Steam 中国区 / 全球<small>中国区前 200 · 全球前 100</small></span>
+              <span class="source-actions">
+                <a class="source-external" href="https://store.steampowered.com/charts/topselling/CN" target="_blank" rel="noopener" aria-label="打开 Steam 中国区官方热销榜" title="中国区官方热销榜">中↗</a>
+                <a class="source-external" href="https://store.steampowered.com/charts/topselling/global" target="_blank" rel="noopener" aria-label="打开 Steam 全球官方热销榜" title="全球官方热销榜">全↗</a>
+              </span>
+            </li>
           </ul>
-          <p>Steam 中国区价格已是人民币。PS5 港服商品目录可分页记录 50 款以上，但官方未公开固定“销量前 50”接口，因此按价格与折扣监测呈现。</p>
+          <p>Nintendo 日服/港服、PlayStation 港服/日服及 Steam 榜单均来自官方商店。Steam 全球榜使用全球排名和中国区参考价。</p>
         </article>
       </aside>
     </section>
   </main>
 
-  <div class="toast" id="toast" role="status" aria-live="polite"><span>✓</span><div><b>刷新完成</b><small>榜单与价格已更新</small></div></div>
-  <script src="steam-data.js"></script>
-  <script src="app.js"></script>
+  <!-- 历史价格走势折线图弹窗 -->
+  <div id="priceHistoryModal" class="price-modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalGameTitle">
+    <div class="price-modal-backdrop" id="modalBackdrop"></div>
+    <div class="price-modal-dialog">
+      <header class="price-modal-header">
+        <div class="modal-game-info">
+          <div class="modal-cover" id="modalCover"></div>
+          <div class="modal-titles">
+            <div class="modal-eyebrow"><span id="modalPlatform" class="platform-chip">PS5</span> <span id="modalMeta" class="modal-meta-text">历史价格走势监测</span></div>
+            <h3 id="modalGameTitle">游戏名称</h3>
+            <p id="modalGameOriginal" class="game-original"></p>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="modalCloseBtn" aria-label="关闭弹窗">×</button>
+      </header>
+
+      <div class="modal-metrics">
+        <div class="modal-metric">
+          <span class="m-label">当前售价</span>
+          <strong id="modalCurrentPrice" class="m-val">HK$ 0</strong>
+          <small id="modalCurrentCny" class="m-sub"></small>
+        </div>
+        <div class="modal-metric accent-low">
+          <span class="m-label">历史最低 (史低)</span>
+          <strong id="modalLowestPrice" class="m-val">HK$ 0</strong>
+          <small id="modalLowestTag" class="m-sub">历史最低点</small>
+        </div>
+        <div class="modal-metric">
+          <span class="m-label">官方原价</span>
+          <strong id="modalOriginalPrice" class="m-val">HK$ 0</strong>
+          <small id="modalDiscountRate" class="m-sub"></small>
+        </div>
+        <div class="modal-metric">
+          <span class="m-label">价格变动记录</span>
+          <strong id="modalRecordCount" class="m-val">0 次</strong>
+          <small class="m-sub">已存本地</small>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-legend">
+            <span class="legend-item"><i class="legend-line"></i> 历史售价 (阶梯折线)</span>
+            <span class="legend-item"><i class="legend-dashed"></i> 历史最低价 (史低参考线)</span>
+          </div>
+          <span class="chart-tip">鼠标移动可查看具体年月日与当时价格</span>
+        </div>
+        <div class="chart-canvas-container" id="chartContainer">
+          <!-- 动态生成的阶梯折线图 SVG -->
+        </div>
+      </div>
+
+      <div class="history-table-section">
+        <div class="history-section-header">
+          <h4>价格变动明细记录</h4>
+          <span class="history-storage-badge">已存储于本地浏览器 (当价格变动时自动记录年月日)</span>
+        </div>
+        <div class="history-table-wrap">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>记录时间 (年月日)</th>
+                <th>当时售价</th>
+                <th>折合人民币</th>
+                <th>变动幅度</th>
+              </tr>
+            </thead>
+            <tbody id="modalHistoryRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"><span>✓</span><div><b>刷新完成</b><small></small></div></div>
+  <script src="config.js?v=20260921q"></script>
+  <script src="nintendo-data.js?v=20260928c"></script>
+  <script src="ps5-data.js?v=20260928e"></script>
+  <script src="ps5-jp-data.js?v=20260921q"></script>
+  <script src="steam-data.js?v=20260921q"></script>
+  <script src="steam-global-data.js?v=20260928a"></script>
+  <script src="app.js?v=20260928x"></script>
 </body>
 </html>
