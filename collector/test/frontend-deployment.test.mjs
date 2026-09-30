@@ -21,7 +21,8 @@ test('网站域名、独立收集器和本地文件均使用正确的接口及�
     vm.runInNewContext(`${source.slice(baseStart, baseEnd)}\n${source.slice(normalizeStart, normalizeEnd)}\nthis.base = apiBase; this.normalize = normalizeGame;`, context);
     assert.equal(context.base, expected);
     for (const image of ['assets/nintendo-hk/cover.jpg', '/assets/nintendo-hk/cover.jpg']) {
-      assert.equal(context.normalize({ image }).image, `${expected}/assets/nintendo-hk/cover.jpg`);
+      assert.equal(context.normalize({ image }).image,
+        protocol === 'file:' && !configured ? image : `${expected}/assets/nintendo-hk/cover.jpg`);
     }
     assert.equal(context.normalize({ image: 'https://official.example.com/cover.jpg' }).image, 'https://official.example.com/cover.jpg');
   }
