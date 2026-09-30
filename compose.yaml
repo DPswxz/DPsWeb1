@@ -1,0 +1,42 @@
+services:
+  collector:
+    build:
+      context: .
+      dockerfile: collector/Dockerfile
+    init: true
+    restart: unless-stopped
+    shm_size: 1gb
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8787"
+      SERVE_FRONTEND: "0"
+      REFRESH_MINUTES: ${REFRESH_MINUTES:-60}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      COLLECT_ON_START: ${COLLECT_ON_START:-1}
+    ports:
+      - "${COLLECTOR_BIND:-127.0.0.1}:${COLLECTOR_PORT:-8787}:8787"
+    volumes:
+      - ${DATA_DIR:-./deploy/data}:/app/collector/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/web.Dockerfile
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      COLLECTOR_UPSTREAM: ${COLLECTOR_UPSTREAM:-http://collector:8787}
+    ports:
+      - "${WEB_BIND:-0.0.0.0}:${WEB_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
