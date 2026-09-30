@@ -1005,7 +1005,8 @@ function normalizeGame(game){
   const old=game.old||(discount&&game.price?Math.round(game.price/(1-discount/100)):null);
   return {
     ...game,
-    image: /^(?:\/)?assets\/nintendo-hk\//.test(game.image || '')
+    image: (location.protocol.startsWith('http') || window.GAME_PULSE_CONFIG?.apiBase)
+      && /^(?:\/)?assets\/nintendo-hk\//.test(game.image || '')
       ? `${apiBase}/${game.image.replace(/^\//, '')}` : game.image,
     discount,
     old,
