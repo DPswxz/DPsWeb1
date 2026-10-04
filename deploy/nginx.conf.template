@@ -3,6 +3,9 @@ server {
     server_name _;
     root /usr/share/nginx/html;
     index index.html;
+    gzip on;
+    gzip_min_length 1024;
+    gzip_types application/javascript application/json text/css image/svg+xml;
 
     # Docker DNS 自动重新解析收集器地址，支持独立部署和容器重建。
     resolver 127.0.0.11 valid=10s ipv6=off;
@@ -19,6 +22,8 @@ server {
     proxy_set_header X-Forwarded-Proto $scheme;
 
     location /api/ {
+        limit_except GET { deny all; }
+        if ($arg_refresh = "1") { return 403; }
         proxy_pass $collector_upstream;
         add_header Cache-Control "no-store" always;
     }
@@ -28,16 +33,23 @@ server {
         add_header Cache-Control "no-store" always;
     }
 
-    location /assets/nintendo-hk/ {
+    location = /version.json {
+        add_header Cache-Control "no-store" always;
+        try_files $uri =404;
+    }
+
+    location = /api/nintendo/image {
+        limit_except GET { deny all; }
         proxy_pass $collector_upstream;
     }
 
     location ~* \.(?:html|js)$ {
-        add_header Cache-Control "no-cache";
+        add_header Cache-Control "no-store" always;
         try_files $uri =404;
     }
 
     location / {
+        add_header Cache-Control "no-store" always;
         try_files $uri $uri/ =404;
     }
 }

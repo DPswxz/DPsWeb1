@@ -1,5 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { storeFetch } from './polite-fetch.mjs';
 import { load } from 'cheerio';
 
 const CHART_URL = 'https://store.steampowered.com/charts/topselling/global?l=english';
@@ -62,9 +63,9 @@ export class SteamGlobalCollector {
 
   async #collect() {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000);
     try {
-      const response = await fetch(CHART_URL, { signal: controller.signal });
+      const response = await storeFetch(CHART_URL, { signal: controller.signal });
       if (!response.ok) throw new Error(`Steam 全球榜返回 HTTP ${response.status}`);
       const chart = parseGlobalChart(await response.text());
       if (chart.length < 50) throw new Error(`Steam 全球榜仅解析到 ${chart.length} 条`);
@@ -75,7 +76,7 @@ export class SteamGlobalCollector {
       for (let i = 0; i < paidIds.length; i += 20) chunks.push(paidIds.slice(i, i + 20));
       await Promise.all(chunks.map(async ids => {
         const url = `https://store.steampowered.com/api/appdetails?appids=${ids.join(',')}&cc=cn&l=schinese&filters=price_overview`;
-        const result = await fetch(url, { signal: controller.signal });
+        const result = await storeFetch(url, { signal: controller.signal });
         if (!result.ok) throw new Error(`Steam 中国区价格接口返回 HTTP ${result.status}`);
         const payload = await result.json();
         for (const id of ids) {

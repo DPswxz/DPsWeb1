@@ -10,19 +10,17 @@ import test from 'node:test';
 const serverFile = fileURLToPath(new URL('../src/server.mjs', import.meta.url));
 
 for (const serveFrontend of ['0', '1']) {
-  test(`部署模式 SERVE_FRONTEND=${serveFrontend} 可读取全部缓存与持久化图片`, { timeout: 30_000 }, async (t) => {
+  test(`部署模式 SERVE_FRONTEND=${serveFrontend} 可读取全部缓存与封面地址`, { timeout: 30_000 }, async (t) => {
     const directory = await mkdtemp(path.join(os.tmpdir(), 'game-pulse-deploy-'));
-    const imageDirectory = path.join(directory, 'assets');
-    await mkdir(imageDirectory);
-    await writeFile(path.join(imageDirectory, 'fixture.jpg'), 'persistent-image');
     const cached = {
       count: 1, updatedAt: new Date().toISOString(), stale: false,
-      games: [{ id: 'fixture', name: '测试游戏', image: 'assets/nintendo-hk/fixture.jpg' }]
+      games: [{ id: 'fixture', name: '测试游戏', image: 'https://store.nintendo.com.hk/media/catalog/product/fixture.jpg' }]
     };
     const nintendoCache = Object.fromEntries(['switch1', 'switch2', 'switch1_hk', 'switch2_hk'].map(key => [key, cached]));
     const cacheVariables = ['CACHE_FILE', 'PS5_CACHE_FILE', 'PS5_JP_CACHE_FILE', 'PS5_JP_LANG_CACHE_FILE', 'STEAM_CACHE_FILE', 'STEAM_GLOBAL_CACHE_FILE'];
     const environment = { ...process.env, HOST: '127.0.0.1', PORT: '0', SERVE_FRONTEND: serveFrontend,
-      NINTENDO_IMAGE_DIR: imageDirectory, COLLECT_ON_START: '0', ALLOWED_ORIGINS: 'https://frontend.example.com' };
+      COLLECT_ON_START: '0', ALLOWED_ORIGINS: 'https://frontend.example.com' };
+    environment.PRICE_HISTORY_FILE=path.join(directory,'price-history.sqlite');
     for (const name of cacheVariables) {
       environment[name] = path.join(directory, `${name}.json`);
       await writeFile(environment[name], JSON.stringify(name === 'CACHE_FILE' ? nintendoCache : cached));
@@ -51,6 +49,12 @@ for (const serveFrontend of ['0', '1']) {
 
     const health = await fetch(`${base}/health`).then(response => response.json());
     assert.equal(health.ok, true);
+    assert.equal(health.refreshInProgress, false);
+    const remaining = Date.parse(health.nextRefreshAt) - Date.parse(health.serverTime);
+    assert.ok(remaining > 0 && remaining <= 60 * 60 * 1000);
+    assert.equal(Date.parse(health.nextRefreshAt) % (60 * 60 * 1000), 0, '下次抓取固定整点');
+    const secondHealth = await fetch(`${base}/health`).then(response => response.json());
+    assert.equal(secondHealth.nextRefreshAt, health.nextRefreshAt, '读取状态不能重置服务器刷新时间');
     assert.equal(Object.keys(health.platforms).length, 8);
     for (const status of Object.values(health.platforms)) assert.equal(status.count, 1);
     for (const endpoint of ['/api/nintendo/rankings?platform=switch1_hk', '/api/ps5/rankings', '/api/ps5-jp/rankings', '/api/steam/rankings', '/api/steam-global/rankings']) {
@@ -59,10 +63,14 @@ for (const serveFrontend of ['0', '1']) {
       assert.equal(response.headers.get('access-control-allow-origin'), 'https://frontend.example.com');
       assert.equal((await response.json()).games[0].id, 'fixture');
     }
-    const image = await fetch(`${base}/assets/nintendo-hk/fixture.jpg`);
-    assert.equal(image.status, 200);
-    assert.equal(await image.text(), 'persistent-image');
-    assert.equal(await readFile(path.join(imageDirectory, 'fixture.jpg'), 'utf8'), 'persistent-image');
+    const image = await fetch(`${base}/api/nintendo/image?url=https://example.com/test.jpg`);
+    const queued = await fetch(`${base}/api/ps5/refresh`, { method: 'POST' });
+    assert.equal(queued.status, 202);
+    assert.equal((await queued.json()).cached, true);
+    const immediate = await fetch(`${base}/api/ps5/rankings?refresh=1`);
+    assert.equal(immediate.status, 200);
+    assert.equal((await immediate.json()).games[0].id, 'fixture');
+    assert.equal(image.status, 400);
     const missingApi = await fetch(`${base}/api/does-not-exist`);
     assert.equal(missingApi.status, 404);
     assert.equal((await missingApi.json()).ok, false);
@@ -72,7 +80,7 @@ for (const serveFrontend of ['0', '1']) {
     const settings = await fetch(`${base}/api/settings`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshMinutes: 30 })
     });
-    assert.equal((await settings.json()).refreshMinutes, 30);
-    assert.equal((await fetch(`${base}/health`).then(response => response.json())).refreshMinutes, 30);
+    assert.equal(settings.status, 403);
+    assert.equal((await fetch(`${base}/health`).then(response => response.json())).refreshMinutes, 60);
   });
 }

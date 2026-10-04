@@ -1,5 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { storeFetch } from './polite-fetch.mjs';
 
 const COLORS = ['#1b5f82', '#2a475e', '#1976d2', '#0097a7', '#00796b', '#388e3c', '#512da8', '#c2185b'];
 
@@ -53,10 +54,10 @@ export class SteamCollector {
   async #collect() {
     const baseUrl = 'https://store.steampowered.com/search/results/?query&count=100&dynamic_data=&sort_by=_ASC&snr=1_7_7_7000_7&filter=topsellers&os=win&cc=cn&l=schinese&infinite=1';
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000);
 
     try {
-      const responses = await Promise.all([0, 100].map(start => fetch(`${baseUrl}&start=${start}`, {
+      const responses = await Promise.all([0, 100].map(start => storeFetch(`${baseUrl}&start=${start}`, {
         signal: controller.signal,
         headers: {
           'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',

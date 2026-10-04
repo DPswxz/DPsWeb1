@@ -1,6 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { describeNintendoRanking } from './nintendo-ranking-source.mjs';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const collectorRoot = path.resolve(currentDir, '..');
@@ -9,7 +10,8 @@ const collectorRoot = path.resolve(currentDir, '..');
 try {
   const nintendoCacheFile = process.env.CACHE_FILE || path.join(collectorRoot, 'data', 'nintendo-cache.json');
   const nintendoOutputFile = path.resolve(collectorRoot, '..', 'dist', 'nintendo-data.js');
-  const nintendoCache = JSON.parse(await readFile(nintendoCacheFile, 'utf8'));
+  const nintendoCache = Object.fromEntries(Object.entries(JSON.parse(await readFile(nintendoCacheFile, 'utf8')))
+    .map(([platform, payload]) => [platform, describeNintendoRanking(payload, platform)]));
   await writeFile(
     nintendoOutputFile,
     `window.NINTENDO_RANKINGS = ${JSON.stringify(nintendoCache, null, 2)};\n`,

@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
+  <meta name="game-pulse-version" content="2fa8439fc3a5bd86fff8" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#071014" />
@@ -10,16 +11,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23071014'/%3E%3Cpath d='M7 12h18l2 10-5 2-3-4h-6l-3 4-5-2z' fill='%238ef0d4'/%3E%3Cpath d='M10 15v4m-2-2h4' stroke='%23071014' stroke-width='1.8'/%3E%3Ccircle cx='22' cy='16' r='1.2' fill='%23071014'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="styles.css?v=20260928f" />
+  <link rel="stylesheet" href="styles.css?v=2fa8439fc3a5bd86fff8" />
 </head>
 <body>
   <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
   <header class="topbar">
-    <a class="brand" href="#" aria-label="GAME PULSE 首页">
+    <a class="brand" href="#" aria-label="DPSTOOLS01 首页">
       <span class="brand-mark"><i></i><i></i></span>
       <span>GAME <b>PULSE</b></span>
     </a>
-    <button class="refresh-button" id="refreshButton" type="button" title="刷新全部平台榜单" aria-label="刷新全部平台榜单"><span class="refresh-icon" aria-hidden="true">↻</span><span>刷新全部</span></button>
+    <button type="button" id="clearCacheButton" class="refresh-button" style="margin-left:auto" title="清除本机榜单和汇率缓存，并重新加载数据" disabled>清除缓存</button>
   </header>
 
   <main class="shell">
@@ -40,7 +41,7 @@
             Switch 1
           </button>
           <button class="platform-tab" data-platform="switch2" role="tab" aria-selected="false">
-            <svg class="plat-icon switch2-icon" viewBox="0 0 28 16" fill="currentColor" aria-hidden="true"><g transform="scale(0.85) translate(0, 0.5)"><path d="M9.34 8.005c0-4.38.01-7.972.023-7.982C9.373.01 10.036 0 10.831 0c1.153 0 1.51.01 1.743.05 1.73.298 3.045 1.6 3.373 3.326.046.242.053.809.053 4.61 0 4.06.005 4.537-.123 4.976-.022.076-.048.15-.08.242a4.14 4.14 0 0 1-3.426 2.767c-.317.033-2.889.046-2.978.013-.05-.02-.053-.752-.053-7.979m4.675.269a1.62 1.62 0 0 0-1.113-1.034 1.61 1.61 0 0 0-1.938 1.073 1.9 1.9 0 0 0-.014.935 1.63 1.63 0 0 0 1.952 1.107c.51-.136.908-.504 1.11-1.028.11-.285.113-.742.003-1.053M3.71 3.317c-.208.04-.526.199-.695.348-.348.301-.52.729-.494 1.232.013.262.03.332.136.544.155.321.39.556.712.715.222.11.278.123.567.133.261.01.354 0 .53-.06.719-.242 1.153-.94 1.03-1.656-.142-.852-.95-1.422-1.786-1.256"/><path d="M3.425.053a4.14 4.14 0 0 0-3.28 3.015C0 3.628-.01 3.956.005 8.3c.01 3.99.014 4.082.08 4.39.368 1.66 1.548 2.844 3.224 3.235.22.05.497.06 2.29.07 1.856.012 2.048.009 2.097-.04.05-.05.053-.69.053-7.94 0-5.374-.01-7.906-.033-7.952-.033-.06-.09-.063-2.03-.06-1.578.004-2.052.014-2.26.05Zm3 14.665-1.35-.016c-1.242-.013-1.375-.02-1.623-.083a2.81 2.81 0 0 1-2.08-2.167c-.074-.335-.074-8.579-.004-8.907a2.85 2.85 0 0 1 1.716-2.05c.438-.176.64-.196 2.058-.2l1.282-.003v13.426Z"/></g><path d="M16.5 4.2c0-2.4 1.8-4.2 4.4-4.2 2.6 0 4.3 1.7 4.3 4 0 1.9-1.1 3.2-2.9 4.8l-3.2 2.6h6.4V14H16v-2.2l4.4-3.8c1.3-1.1 2-2 2-3.1 0-1.2-.9-2-2-2-1.2 0-2 .8-2.1 2.1h-1.8z"/></svg>
+            <svg class="plat-icon switch2-icon" viewBox="0 0 25.5 14.05" fill="currentColor" aria-hidden="true"><g transform="scale(0.85) translate(0, 0.5)"><path d="M9.34 8.005c0-4.38.01-7.972.023-7.982C9.373.01 10.036 0 10.831 0c1.153 0 1.51.01 1.743.05 1.73.298 3.045 1.6 3.373 3.326.046.242.053.809.053 4.61 0 4.06.005 4.537-.123 4.976-.022.076-.048.15-.08.242a4.14 4.14 0 0 1-3.426 2.767c-.317.033-2.889.046-2.978.013-.05-.02-.053-.752-.053-7.979m4.675.269a1.62 1.62 0 0 0-1.113-1.034 1.61 1.61 0 0 0-1.938 1.073 1.9 1.9 0 0 0-.014.935 1.63 1.63 0 0 0 1.952 1.107c.51-.136.908-.504 1.11-1.028.11-.285.113-.742.003-1.053M3.71 3.317c-.208.04-.526.199-.695.348-.348.301-.52.729-.494 1.232.013.262.03.332.136.544.155.321.39.556.712.715.222.11.278.123.567.133.261.01.354 0 .53-.06.719-.242 1.153-.94 1.03-1.656-.142-.852-.95-1.422-1.786-1.256"/><path d="M3.425.053a4.14 4.14 0 0 0-3.28 3.015C0 3.628-.01 3.956.005 8.3c.01 3.99.014 4.082.08 4.39.368 1.66 1.548 2.844 3.224 3.235.22.05.497.06 2.29.07 1.856.012 2.048.009 2.097-.04.05-.05.053-.69.053-7.94 0-5.374-.01-7.906-.033-7.952-.033-.06-.09-.063-2.03-.06-1.578.004-2.052.014-2.26.05Zm3 14.665-1.35-.016c-1.242-.013-1.375-.02-1.623-.083a2.81 2.81 0 0 1-2.08-2.167c-.074-.335-.074-8.579-.004-8.907a2.85 2.85 0 0 1 1.716-2.05c.438-.176.64-.196 2.058-.2l1.282-.003v13.426Z"/></g><path d="M16.5 4.2c0-2.4 1.8-4.2 4.4-4.2 2.6 0 4.3 1.7 4.3 4 0 1.9-1.1 3.2-2.9 4.8l-3.2 2.6h6.4V14H16v-2.2l4.4-3.8c1.3-1.1 2-2 2-3.1 0-1.2-.9-2-2-2-1.2 0-2 .8-2.1 2.1h-1.8z"/></svg>
             Switch 2
           </button>
           <button class="platform-tab" data-platform="ps5" role="tab" aria-selected="false">
@@ -53,32 +54,16 @@
           </button>
         </div>
       </article>
-      <article class="metric">
-        <span class="metric-label">榜单容量</span>
-        <strong id="gameCount">50</strong><small>款 / 榜</small>
+      <article class="metric capacity-metric">
+        <div class="capacity-head"><span class="metric-label">榜单容量</span><span class="metric-label">有折扣</span></div>
+        <div class="capacity-values"><div><strong id="gameCount">50</strong><small>款</small></div><strong id="discountedCount">0 <small>款</small></strong></div>
       </article>
       <article class="metric accent-metric">
         <span class="metric-label">今日折扣率</span>
         <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
           <strong id="discountRate">-0%</strong>
-          <small id="discountRateSub" style="color:#8da0a6;font-size:12px;font-family:'DM Mono',monospace;white-space:nowrap">共 0 款游戏</small>
         </div>
-      </article>
-      <article class="metric">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
-          <span class="metric-label" style="margin-bottom:0">自动刷新</span>
-          <span id="sourceTag" class="source-tag" style="font-size:10px;color:var(--mint);background:rgba(142,240,212,.08);padding:1px 6px;border-radius:4px;font-family:'DM Mono',monospace">官方直采</span>
-        </div>
-        <div class="auto-refresh">
-          <button id="autoToggle" class="toggle active" role="switch" aria-checked="true"><span></span></button>
-          <select id="intervalSelect" aria-label="自动刷新间隔">
-            <option value="5">每 5 分钟</option>
-            <option value="15" selected>每 15 分钟</option>
-            <option value="30">每 30 分钟</option>
-            <option value="60">每 1 小时</option>
-          </select>
-        </div>
-        <small class="cny-summary" id="lastUpdated" title="上次数据源采集更新的具体时间" style="display:block;margin-top:8px;font-size:11px;color:#8da0a6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">来源时间：正在获取…</small>
+        <small id="discountRateSub" class="metric-footnote">共 0 款游戏</small>
       </article>
     </section>
 
@@ -109,7 +94,7 @@
             <span>仅看折扣</span>
             <span id="dealBadge" class="deal-count-badge">0</span>
           </button>
-          <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="搜索游戏…" autocomplete="off" /></label>
+          <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="搜索原名 / 译名…" aria-label="搜索游戏原名或译名" autocomplete="off" /></label>
           <select id="sortSelect" aria-label="排序方式">
             <option value="rank">按排名</option>
             <option value="priceAsc">价格从低到高</option>
@@ -128,6 +113,7 @@
           </div>
           <span class="region-pill" id="regionPill">JP · JPY</span>
         </div>
+        <p id="refreshNotice" class="refresh-notice" role="status" aria-live="polite">正在确认数据更新时间…</p>
         <div class="table-scroll">
           <table>
             <thead><tr><th class="rank-col">排名</th><th>游戏</th><th>平台</th><th>价格</th><th class="col-history">历史价格</th><th></th></tr></thead>
@@ -137,7 +123,7 @@
         <div id="emptyState" class="empty-state" hidden>
           <span>⌁</span><h3>没有找到游戏</h3><p>换个关键词试试看。</p>
         </div>
-        <footer class="table-footer"><span id="resultSummary">显示 12 款游戏</span><span class="pagination" aria-label="榜单分页"><button type="button" id="pagePrev" class="page-button" aria-label="上一页">‹</button><b id="pageInfo">1 / 1</b><button type="button" id="pageNext" class="page-button" aria-label="下一页">›</button></span><span>上次来源 <b id="footerSourceTime">—</b> · 下次刷新 <b id="countdown">14:59</b></span></footer>
+        <footer class="table-footer"><span id="resultSummary">显示 12 款游戏</span><span class="pagination" aria-label="榜单分页"><button type="button" id="pagePrev" class="page-button" aria-label="上一页">‹</button><b id="pageInfo">1 / 1</b><button type="button" id="pageNext" class="page-button" aria-label="下一页">›</button></span><span>上次来源 <b id="footerSourceTime">—</b> · 下次刷新 <b id="countdown">等待同步</b></span></footer>
       </div>
 
       <aside class="insights">
@@ -146,10 +132,6 @@
           <strong id="bestDiscount">-75%</strong>
           <h3 id="bestDealName">MONSTER HUNTER RISE</h3>
           <p id="bestDealPrice"><del>¥ 3,990</del> ¥ 998</p>
-        </article>
-        <article class="insight-card split-card">
-          <div><span>平均价格</span><strong id="averagePrice">¥ 4,982</strong></div>
-          <div><span>有折扣</span><strong id="discountedCount">6 <small>款</small></strong></div>
         </article>
         <article class="insight-card rate-card">
           <div class="source-head"><span id="rateCardTitle">实时汇率</span><span class="source-badge rate-badge" id="rateBadge">连接中</span></div>
@@ -208,17 +190,19 @@
     <div class="price-modal-backdrop" id="modalBackdrop"></div>
     <div class="price-modal-dialog">
       <header class="price-modal-header">
+        <div class="modal-topline">
+          <div class="modal-eyebrow"><span id="modalPlatform" class="platform-chip">PS5</span> <span id="modalMeta" class="modal-meta-text">历史价格走势监测</span></div>
+          <button type="button" class="modal-close" id="modalCloseBtn" aria-label="关闭弹窗">×</button>
+        </div>
         <div class="modal-game-info">
           <div class="modal-cover" id="modalCover"></div>
           <div class="modal-titles">
-            <div class="modal-eyebrow"><span id="modalPlatform" class="platform-chip">PS5</span> <span id="modalMeta" class="modal-meta-text">历史价格走势监测</span></div>
             <h3 id="modalGameTitle">游戏名称</h3>
             <p id="modalGameOriginal" class="game-original"></p>
           </div>
         </div>
-        <button type="button" class="modal-close" id="modalCloseBtn" aria-label="关闭弹窗">×</button>
       </header>
-
+      <div class="price-modal-body">
       <div class="modal-metrics">
         <div class="modal-metric">
           <span class="m-label">当前售价</span>
@@ -226,7 +210,7 @@
           <small id="modalCurrentCny" class="m-sub"></small>
         </div>
         <div class="modal-metric accent-low">
-          <span class="m-label">历史最低 (史低)</span>
+          <span class="m-label">建档以来最低价</span>
           <strong id="modalLowestPrice" class="m-val">HK$ 0</strong>
           <small id="modalLowestTag" class="m-sub">历史最低点</small>
         </div>
@@ -238,27 +222,30 @@
         <div class="modal-metric">
           <span class="m-label">价格变动记录</span>
           <strong id="modalRecordCount" class="m-val">0 次</strong>
-          <small class="m-sub">已存本地</small>
         </div>
       </div>
 
       <div class="chart-card">
         <div class="chart-header">
+          <div id="chartRanges" class="chart-ranges" role="group" aria-label="价格走势时间范围">
+            <button type="button" class="active" data-months="6" aria-pressed="true">6个月</button>
+            <button type="button" data-months="12" aria-pressed="false">12个月</button>
+            <button type="button" data-months="0" aria-pressed="false">全部</button>
+          </div>
           <div class="chart-legend">
             <span class="legend-item"><i class="legend-line"></i> 历史售价 (阶梯折线)</span>
             <span class="legend-item"><i class="legend-dashed"></i> 历史最低价 (史低参考线)</span>
           </div>
-          <span class="chart-tip">鼠标移动可查看具体年月日与当时价格</span>
         </div>
         <div class="chart-canvas-container" id="chartContainer">
           <!-- 动态生成的阶梯折线图 SVG -->
         </div>
+        <p class="chart-coverage">按天显示，仅展示建档后的真实价格记录</p>
       </div>
 
       <div class="history-table-section">
         <div class="history-section-header">
           <h4>价格变动明细记录</h4>
-          <span class="history-storage-badge">已存储于本地浏览器 (当价格变动时自动记录年月日)</span>
         </div>
         <div class="history-table-wrap">
           <table class="history-table">
@@ -274,16 +261,18 @@
           </table>
         </div>
       </div>
+      </div>
     </div>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"><span>✓</span><div><b>刷新完成</b><small></small></div></div>
-  <script src="config.js?v=20260921q"></script>
-  <script src="nintendo-data.js?v=20260928c"></script>
-  <script src="ps5-data.js?v=20260928e"></script>
-  <script src="ps5-jp-data.js?v=20260921q"></script>
-  <script src="steam-data.js?v=20260921q"></script>
-  <script src="steam-global-data.js?v=20260928a"></script>
-  <script src="app.js?v=20260928x"></script>
+  <script src="config.js?v=2fa8439fc3a5bd86fff8"></script>
+  <script src="nintendo-data.js?v=2fa8439fc3a5bd86fff8"></script>
+  <script src="ps5-data.js?v=2fa8439fc3a5bd86fff8"></script>
+  <script src="ps5-jp-data.js?v=2fa8439fc3a5bd86fff8"></script>
+  <script src="steam-data.js?v=2fa8439fc3a5bd86fff8"></script>
+  <script src="steam-global-data.js?v=2fa8439fc3a5bd86fff8"></script>
+  <script src="update-client.js?v=2fa8439fc3a5bd86fff8"></script>
+  <script src="app.js?v=2fa8439fc3a5bd86fff8"></script>
 </body>
 </html>
