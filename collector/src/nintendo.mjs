@@ -1,13 +1,14 @@
 import { chromium } from 'playwright';
-import { access, cp, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
+import { access, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { nintendoCovers, nintendoImageUrl } from './nintendo-cover.mjs';
+import { describeNintendoRanking } from './nintendo-ranking-source.mjs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { setTimeout as delay } from 'node:timers/promises';
 
 const PLATFORM_CONFIG = {
   switch1: {
     label: 'Nintendo Switch',
-    officialLimit: 50,
+    officialLimit: 100,
     url: 'https://store-jp.nintendo.com/software/ranking/switch/'
   },
   switch2: {
@@ -30,9 +31,6 @@ const PLATFORM_CONFIG = {
 };
 
 const COLORS = ['#dc3d5a', '#278f83', '#5266a8', '#ba7b32', '#7858a6', '#3a7a55'];
-const BUNDLED_IMAGE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../dist/assets/nintendo-hk');
-export const HK_IMAGE_DIR = process.env.NINTENDO_IMAGE_DIR
-  ? path.resolve(process.env.NINTENDO_IMAGE_DIR) : BUNDLED_IMAGE_DIR;
 
 function getBrowserCandidates() {
   return [
@@ -122,25 +120,28 @@ export class NintendoCollector {
 
   async init() {
     await mkdir(path.dirname(this.cacheFile), { recursive: true });
-    await mkdir(HK_IMAGE_DIR, { recursive: true });
-    if (HK_IMAGE_DIR !== BUNDLED_IMAGE_DIR) {
-      try {
-        await access(BUNDLED_IMAGE_DIR);
-        await cp(BUNDLED_IMAGE_DIR, HK_IMAGE_DIR, { recursive: true, force: false });
-      } catch (error) {
-        if (error.code !== 'ENOENT') throw error;
-      }
-    }
     try {
       this.cache = JSON.parse(await readFile(this.cacheFile, 'utf8'));
     } catch {
       this.cache = {};
     }
+    // 将旧版磁盘封面路径迁移为随前端发布的官方图片地址。
+    if (Object.values(this.cache).some(data => data.games?.some(game => /^\/?assets\/nintendo-hk\//.test(game.image || '')))) {
+      const source = await readFile(new URL('../../dist/nintendo-data.js', import.meta.url), 'utf8');
+      const bundled = JSON.parse(source.slice(source.indexOf('=') + 1).trim().replace(/;$/, ''));
+      for (const platform of ['switch1_hk', 'switch2_hk']) {
+        const images = new Map((bundled[platform]?.games || []).map(game => [game.id, game.image]));
+        for (const game of this.cache[platform]?.games || []) {
+          if (/^\/?assets\/nintendo-hk\//.test(game.image || '')) game.image = images.get(game.id) || '';
+        }
+      }
+      await this.#save();
+    }
   }
 
   get(platform) {
     if (!PLATFORM_CONFIG[platform]) throw new Error(`不支持的平台：${platform}`);
-    return this.cache[platform] || null;
+    return describeNintendoRanking(this.cache[platform] || null, platform);
   }
 
   async refreshAll({ force = false } = {}) {
@@ -161,24 +162,27 @@ export class NintendoCollector {
   async #collectBoth() {
     const browser = await launchBrowser();
     const errors = [];
+    const nextCache = { ...this.cache };
     try {
-      await Promise.all(Object.keys(PLATFORM_CONFIG).map(async (platform) => {
+      for (const platform of Object.keys(PLATFORM_CONFIG)) {
         try {
-          this.cache[platform] = await this.#collectPlatform(browser, platform);
+          nextCache[platform] = describeNintendoRanking(await this.#collectPlatform(browser, platform), platform);
         } catch (error) {
           errors.push(`${platform}: ${error.message}`);
           if (this.cache[platform]) {
-            this.cache[platform] = {
+            nextCache[platform] = {
               ...this.cache[platform],
               stale: true,
               lastError: error.message
             };
           }
         }
-      }));
+        await delay(2000);
+      }
     } finally {
       await browser.close();
     }
+    this.cache = nextCache;
     await this.#save();
     if (errors.length === Object.keys(PLATFORM_CONFIG).length && !Object.keys(this.cache).length) {
       throw new Error(`任天堂榜单采集失败：${errors.join('；')}`);
@@ -216,14 +220,15 @@ export class NintendoCollector {
         langMap = await page.evaluate(async (items) => {
           const token = localStorage.getItem('access_token_MNS');
           const out = {};
-          const chunkSize = 12;
+          const chunkSize = 1;
           for (let i = 0; i < items.length; i += chunkSize) {
             const chunk = items.slice(i, i + chunkSize);
             await Promise.all(chunk.map(async item => {
               const targetId = item.variationMasterId || ('D' + item.id);
               try {
                 const u = 'https://store-jp.nintendo.com/mobify/proxy/api/product/shopper-products/v1/organizations/f_ecom_bfgj_prd/products/' + targetId + '?siteId=MNS';
-                const r = await fetch(u, { headers: { 'authorization': 'Bearer ' + token } });
+                const r = await fetch(u, { headers: { 'authorization': 'Bearer ' + token }, signal: AbortSignal.timeout(15000) });
+                if ([403, 429, 503].includes(r.status)) out.blocked = true;
                 if (!r.ok) return;
                 const d = await r.json();
                 const langs = d.c_original_specification?.supportLanguages || [];
@@ -231,6 +236,8 @@ export class NintendoCollector {
                 out[item.id] = { hasChinese, langs };
               } catch {}
             }));
+            if (out.blocked) { delete out.blocked; break; }
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
           return out;
         }, products.slice(0, config.officialLimit));
@@ -286,35 +293,11 @@ export class NintendoCollector {
       if (products.length < 20) throw new Error(`官方港服榜单数量异常：仅 ${products.length} 条`);
 
       const previousRanks = new Map((this.cache[platform]?.games || []).map(game => [game.id, game.rank]));
-      const previousImages = new Map((this.cache[platform]?.games || []).map(game => [game.id, game.image]));
-      await mkdir(HK_IMAGE_DIR, { recursive: true });
-      let imageIndex = 0;
-      await Promise.all(Array.from({ length: 4 }, async () => {
-        while (imageIndex < products.length) {
-          const product = products[imageIndex++];
-          if (!product.image) continue;
-          const originalImage = product.image.replace(/\/cache\/[^/]+\//, '/');
-          const extension = path.extname(new URL(originalImage).pathname).toLowerCase() === '.png' ? 'png' : 'jpg';
-          const hash = createHash('sha256').update(originalImage).digest('hex').slice(0, 12);
-          const filename = `${product.id}-${hash}.${extension}`;
-          const imagePath = path.join(HK_IMAGE_DIR, filename);
-          const localUrl = `assets/nintendo-hk/${filename}`;
-          try {
-            await access(imagePath);
-            product.image = localUrl;
-            continue;
-          } catch {}
-          try {
-            const response = await page.request.get(originalImage, { timeout: 25_000 });
-            if (!response.ok() || !response.headers()['content-type']?.startsWith('image/')) throw new Error('图片响应无效');
-            await writeFile(imagePath, await response.body());
-            product.image = localUrl;
-          } catch {
-            product.image = previousImages.get(product.id)?.startsWith('assets/nintendo-hk/')
-              ? previousImages.get(product.id) : '';
-          }
-        }
-      }));
+      nintendoCovers.prime(await context.storageState(), await page.evaluate(() => navigator.userAgent));
+      for (const product of products) {
+        try { product.image = product.image ? nintendoImageUrl(product.image) : ''; }
+        catch { product.image = ''; }
+      }
       const games = products.slice(0, config.officialLimit).map((product, index) => {
         const rank = product.rank || index + 1;
         const previousRank = previousRanks.get(product.id);

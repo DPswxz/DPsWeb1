@@ -5,6 +5,7 @@ collector/node_modules/
 collector/data/
 collector/bin/
 collector/run/
+collector/**/*.download
 .env
 .env.*
 !.env.example

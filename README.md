@@ -77,11 +77,15 @@ docker compose -f compose.web.yaml up -d --build --wait
 curl http://127.0.0.1:8080/health
 ```
 
-打开 `http://A的IP:8080`。访问者只连接 A，A 负责转发 `/api/`、`/health` 和 `/assets/nintendo-hk/` 到 B，无需修改 `dist/config.js`。该方式支持 HTTPS 网站连接内网 HTTP 收集器。
+打开 `http://A的IP:8080`。访问者只连接 A，A 负责转发 `/api/`、`/health` 到 B，无需修改 `dist/config.js`。该方式支持 HTTPS 网站连接内网 HTTP 收集器。
 
 更改 `COLLECTOR_UPSTREAM` 后再次执行启动命令，Compose 会重建配置变化的容器。
 
 ## 数据持久化与服务器迁移
+
+价格历史使用 `deploy/data/price-history.sqlite`（SQLite），仅记录实际价格变化。游戏标识单独存储，金额以整数分、时间以整数毫秒保存；复合主键支持按游戏和日期检索。接口支持批量游戏查询、日期范围及分页，前端只请求当前页游戏最近6个月的数据，点开详情后再读取该游戏的完整历史。
+
+首次升级会自动迁移旧 `price-history.json`，保留毫秒时间和同日价格变化，并生成经验证的 `price-history.json.gz` 备份。请备份整个 `deploy/data/` 目录；运行中备份数据库需使用 SQLite 备份工具，或先停止收集器再复制，不能仅复制活跃数据库的主文件。手动运行需要 Node.js 22.13 或更新版本。
 
 收集器缓存、语言缓存、采集图片全部保存在宿主机 `deploy/data/`，通过 `DATA_DIR` 可改为其他目录。更新镜像和删除容器不会删除这个目录。`.env` 和运行数据不会上传到 GitHub。
 
@@ -108,7 +112,7 @@ docker compose up -d --build --wait
 
 如果设置了自定义 `DATA_DIR`，备份和恢复实际数据目录，并确保新服务器的 `.env` 指向该目录。迁移 B 后，在 A 的 `.env` 更新 `COLLECTOR_UPSTREAM` 并重新启动网站。纯网站服务器只需迁移 `.env`，不需要收集器数据目录。
 
-将本地 Windows 的已有采集数据迁移到服务器时，先运行 `Stop-GamePulse.cmd`，将 `collector/data/` 中的 JSON 文件放入服务器 `deploy/data/`，将 `dist/assets/nintendo-hk/` 中的图片放入 `deploy/data/assets/nintendo-hk/`，再启动服务器。浏览器收藏、设置和价格记录使用 localStorage，属于各浏览器的本地数据，不在服务器备份中。
+将本地 Windows 的已有采集数据迁移到服务器时，先运行 `Stop-GamePulse.cmd`，将 `collector/data/` 中的 JSON 文件放入服务器 `deploy/data/`，再启动服务器。浏览器收藏、设置和价格记录使用 localStorage，属于各浏览器的本地数据，不在服务器备份中。
 
 ## 更新、日志与停止
 
@@ -146,7 +150,7 @@ cp .env.example .env
 node --env-file=.env src/server.mjs
 ```
 
-默认整站地址 `http://服务器IP:8787`，生产环境通过 systemd 等进程管理器运行。`.env` 中设置 `SERVE_FRONTEND=0` 可以只运行收集器。默认缓存目录 `collector/data/`，默认图片目录 `dist/assets/nintendo-hk/`；也可设置 `NINTENDO_IMAGE_DIR=./data/assets/nintendo-hk` 把采集图片放入数据目录。
+默认整站地址 `http://服务器IP:8787`，生产环境通过 systemd 等进程管理器运行。`.env` 中设置 `SERVE_FRONTEND=0` 可以只运行收集器。默认缓存目录 `collector/data/`，港服封面通过 `/api/nintendo/image` 转发官方图片，仅使用有容量限制的内存缓存，不保存本地图片文件。
 
 纯静态托管时，将 `dist/` 作为网站根目录，在 `dist/config.js` 中设置收集器 HTTPS 地址，并在收集器设置 `ALLOWED_ORIGINS=https://你的前端域名`。此时浏览器需要能直接访问收集器，港服图片也从收集器加载。推荐使用前述 Nginx 代理方式部署。
 
@@ -159,3 +163,9 @@ npm test
 ```
 
 GitHub Actions 自动运行测试，并验证 Docker 镜像、Chromium 启动、同机部署、分离部署的接口转发和持久化图片访问。部署测试关闭启动采集，避免依赖官方网站实时响应。
+# 游戏名翻译
+
+在根目录 `.env` 设置 `GOOGLE_TRANSLATE_API_KEY`，部署后由收集器调用 Google Cloud Translation Basic，将新出现的日语或英语名称翻译为简体中文。现有中文译名优先，同名跨平台共用缓存，忽略商标符号、全角字符和多余空格的差异。
+
+翻译与调用记录存储在 `deploy/data/title-translations.sqlite`，备份时与价格数据库一起保存。成功译名永久复用；每个新名称最多调用一次，失败、超时、重启后也不会自动重复请求。接口连接失败暂停新请求1小时，权限错误或超限暂停24小时；已有译名照常显示，无译名显示原名。网页每30秒同步服务器缓存，该同步不会调用翻译API。机器翻译不一定是官方中文游戏名，可在 `collector/src/title-overrides.json` 中添加准确名称，部署后优先使用。
+

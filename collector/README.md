@@ -30,7 +30,7 @@ npm start
 ```
 
 首次启动会立即采集，之后默认每 60 分钟更新。缓存保存在 `data/nintendo-cache.json`，官方页面临时限流或排队时会继续返回上次成功数据。
-港服榜单的高清图片会保存在 `../dist/assets/nintendo-hk/`，避免官方图片地址在榜单页外加载失败。
+港服封面由 `/api/nintendo/image` 转发官方图片，缩小后仅在内存中缓存最多64张；不创建 assets 图片文件。
 
 接口：
 
@@ -46,7 +46,7 @@ npm start
 - `GET /api/steam/rankings`、`POST /api/steam/refresh`
 - `GET /api/steam-global/rankings`、`POST /api/steam-global/refresh`
 - `POST /api/settings`：修改检查周期，允许 5、15、30、60 分钟
-- `GET /assets/nintendo-hk/文件名`：独立部署时也提供封面图片
+- `GET /api/nintendo/image?url=官方图片地址`：转发港服封面，仅允许任天堂官方图片域名
 
 ## Docker 部署
 

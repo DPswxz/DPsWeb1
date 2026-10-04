@@ -137,8 +137,16 @@ function Start-Collector($State) {
   $env:ALLOWED_ORIGINS = '*'
 
   $nodePath = (Get-Command node -ErrorAction Stop).Source
+  $serverEntry = 'src/server.mjs'
+  try {
+    $dockerWebPort = 8080
+    $dockerPortSetting = Get-Content (Join-Path $projectRoot '.env') | Where-Object { $_ -match '^WEB_PORT=(\d+)\s*$' } | Select-Object -First 1
+    if ($dockerPortSetting -match '^WEB_PORT=(\d+)\s*$') { $dockerWebPort = [int]$Matches[1] }
+    $dockerHealth = Invoke-RestMethod "http://127.0.0.1:$dockerWebPort/health" -TimeoutSec 3
+    if ($Port -ne $dockerWebPort -and $dockerHealth.service -eq 'game-pulse-nintendo-collector') { $serverEntry = 'src/local-web.mjs' }
+  } catch {}
   $server = Start-Process -FilePath $nodePath `
-    -ArgumentList @('src/server.mjs') `
+    -ArgumentList @($serverEntry) `
     -WorkingDirectory $collectorDir `
     -WindowStyle Hidden `
     -RedirectStandardOutput $serverOut `

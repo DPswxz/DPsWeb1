@@ -1,5 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { storeFetch } from './polite-fetch.mjs';
+import { PlayStationCollector } from './ps5.mjs';
 
 const COLORS = ['#365d83', '#b13a84', '#3163b5', '#8b5689', '#705137', '#7768d8', '#4c8550', '#b74752', '#0d6978', '#990000'];
 
@@ -44,7 +46,11 @@ function pickCoverImage(product) {
 
 const JP_CHINESE_MAP = {
   'PRAGMATA': '识质存在',
+  'PRAGMATA™': '识质存在',
   'PRAGMATA Deluxe Edition': '识质存在 豪华版',
+  'PRAGMATA™ Deluxe Edition': '识质存在 豪华版',
+  'PRAGMATA Digital Deluxe Edition': '识质存在 数字豪华版',
+  'PRAGMATA™ Digital Deluxe Edition': '识质存在 数字豪华版',
   'Forza Horizon 5': '极限竞速：地平线 5',
   'Forza Horizon 5 Premium Edition': '极限竞速：地平线 5 顶级版',
   'Forza Horizon 5 Standard Edition': '极限竞速：地平线 5 标准版',
@@ -174,13 +180,14 @@ function getJpChineseTitle(name) {
 }
 
 export class PlayStationJpCollector {
-  constructor({ cacheFile, langCacheFile, refreshMinutes = 15 } = {}) {
+  constructor({ cacheFile, langCacheFile, refreshMinutes = 15, request = storeFetch } = {}) {
     this.cacheFile = cacheFile || path.resolve('data/ps5-jp-cache.json');
     this.langCacheFile = langCacheFile || path.resolve('data/ps5-jp-lang-cache.json');
     this.refreshMinutes = Math.max(5, Number(refreshMinutes) || 15);
     this.cache = null;
     this.langCache = {};
     this.refreshing = null;
+    this.request = request;
   }
 
   async init() {
@@ -221,17 +228,15 @@ export class PlayStationJpCollector {
       return this.langCache[productId];
     }
     try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 6000);
+      const signal = AbortSignal.timeout(15 * 60 * 1000);
       const url = `https://store.playstation.com/ja-jp/product/${productId}`;
-      const res = await fetch(url, {
-        signal: controller.signal,
+      const res = await storeFetch(url, {
+        signal,
         headers: {
           'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
           'accept-language': 'ja-JP'
         }
       });
-      clearTimeout(timer);
       if (!res.ok) {
         return false;
       }
@@ -246,146 +251,22 @@ export class PlayStationJpCollector {
   }
 
   async #collect() {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 35000);
-
-    async function fetchPage(offset, size) {
-      const variables = {
-        id: DEFAULT_CATEGORY_ID,
-        pageArgs: { size, offset },
-        sortBy: null,
-        filterBy: [],
-        facetOptions: []
-      };
-      const url = `${DEFAULT_GRAPHQL_ENDPOINT}?operationName=categoryGridRetrieve&variables=${encodeURIComponent(JSON.stringify(variables))}&extensions=${encodeURIComponent(JSON.stringify({ persistedQuery: { version: 1, sha256Hash: DEFAULT_SHA256 } }))}`;
-      const response = await fetch(url, {
-        signal: controller.signal,
-        headers: {
-          'content-type': 'application/json',
-          'x-apollo-operation-name': 'categoryGridRetrieve',
-          'x-psn-store-locale-override': 'ja-JP',
-          'x-psn-app-ver': '@sie-ppr-web-store/app/0.114.0-',
-          'referer': 'https://store.playstation.com/',
-          'accept-language': 'ja-JP',
-          'accept': 'application/json',
-          'apollographql-client-version': '0.114.0',
-          'apollographql-client-name': '@sie-ppr-web-store/app',
-          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
-        }
-      });
-      if (!response.ok) {
-        throw new Error(`PlayStation Japan GraphQL 返回 HTTP ${response.status}`);
-      }
-      const payload = await response.json();
-      const grid = payload.data?.categoryGridRetrieve;
-      return grid?.concepts?.length ? grid.concepts : (grid?.products || []);
-    }
-
-    try {
-      const [page1, page2, page3] = await Promise.all([
-        fetchPage(0, 100),
-        fetchPage(100, 100),
-        fetchPage(200, 100)
-      ]);
-      const rawProducts = [...page1, ...page2, ...page3];
-
-      if (!rawProducts.length) {
-        throw new Error('PlayStation Japan Store 未返回榜单商品');
-      }
-
-      const previousRanks = new Map((this.cache?.games || []).map((g) => [g.id || g.name, g.rank]));
-
-      // 映射初版商品数据
-      const candidateList = [];
-      for (let index = 0; index < rawProducts.length; index++) {
-        const product = rawProducts[index];
-        const cleanName = cleanGameName(product.name);
-        const discountedStr = product.price?.discountedPrice || product.price?.basePrice || '';
-        const baseStr = product.price?.basePrice || '';
-        const isFree = Boolean(product.price?.isFree || /無料|free/i.test(discountedStr));
-        const isUnavailable = /利用不可|購入不可|not available/i.test(discountedStr) || /利用不可|not available/i.test(baseStr);
-        const price = parsePriceNumber(discountedStr);
-        if (!isFree && (isUnavailable || price === 0)) {
-          continue;
-        }
-        const rawOld = parsePriceNumber(baseStr);
-        const discount = parseDiscountNumber(product.price?.discountText) || (rawOld > price && price > 0 ? Math.round((1 - price / rawOld) * 100) : 0);
-        const oldPrice = discount > 0 && rawOld > price ? rawOld : (discount > 0 ? Math.round(price / (1 - discount / 100)) : null);
-
-        const platforms = Array.isArray(product.platforms) && product.platforms.length
-          ? product.platforms.join(' / ')
-          : 'PS5';
-
-        const previousRank = previousRanks.get(product.id || cleanName);
-        const trend = !previousRank || previousRank === candidateList.length + 1
-          ? 'same'
-          : previousRank > candidateList.length + 1 ? 'up' : 'down';
-
-        const image = pickCoverImage(product);
-        const coverLetters = cleanName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2).toUpperCase() || 'PS';
-
-        candidateList.push({
-          id: product.id || `ps5-jp-${candidateList.length + 1}`,
-          rawName: product.name,
-          name: cleanName,
-          cn: getJpChineseTitle(cleanName),
-          meta: `PlayStation · ${product.storeDisplayClassification?.replace(/_/g, ' ') || '热门推荐'}`,
-          platform: platforms,
-          price,
-          old: oldPrice,
-          discount,
-          trend,
-          cover: coverLetters,
-          color: COLORS[candidateList.length % COLORS.length],
-          image,
-          url: product.id ? `https://store.playstation.com/ja-jp/product/${product.id}` : 'https://store.playstation.com/ja-jp/pages/browse'
-        });
-
-        if (candidateList.length >= 200) {
-          break;
-        }
-      }
-
-      // 批量并发检测中文支持 (按 10 个一批)
-      const BATCH_SIZE = 10;
-      for (let i = 0; i < candidateList.length; i += BATCH_SIZE) {
-        const batch = candidateList.slice(i, i + BATCH_SIZE);
-        await Promise.all(batch.map(async (item) => {
-          // 页面语言接口偶尔会被商店 CDN 拦截；已有中文译名时仍可可靠显示支持中文提示。
-          item.hasChinese = (getJpChineseTitle(item.name) !== item.name) || await this.#detectChinese(item.id);
-        }));
-      }
-
-      const games = candidateList.map((g, idx) => ({
-        ...g,
-        rank: idx + 1
-      }));
-
-      this.cache = {
-        platform: 'ps5_jp',
-        label: 'PlayStation 5 日服',
-        source: 'https://store.playstation.com/ja-jp/pages/browse',
-        sourceType: 'PlayStation Store 日服官方商店',
-        officialLimit: 200,
-        count: games.length,
-        updatedAt: new Date().toISOString(),
-        stale: false,
-        games
-      };
-
+    // 与港服共用 SKU 购买价格解析，避开会员试玩和游戏目录按钮。
+    const collector = new PlayStationCollector({
+      cacheFile: this.cacheFile, refreshMinutes: this.refreshMinutes,
+      fallbackFile: null, region: 'jp', request: this.request
+    });
+    collector.cache = this.cache;
+    const result = await collector.refresh({force:true});
+    if (result) {
+      this.cache = {...result, games: result.games.map(game => ({
+        ...game,
+        cn: getJpChineseTitle(game.name),
+        hasChinese: Boolean(game.hasChinese || this.langCache[game.id])
+      }))};
       await this.#save();
-      return this.cache;
-    } catch (error) {
-      if (this.cache) {
-        this.cache.stale = true;
-        this.cache.lastError = error.message;
-        await this.#save().catch(() => {});
-        return this.cache;
-      }
-      throw error;
-    } finally {
-      clearTimeout(timeout);
     }
+    return this.cache;
   }
 
   async #save() {

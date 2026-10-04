@@ -26,8 +26,9 @@
 .price-modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px}
 .price-modal[hidden]{display:none!important}
 .price-modal-backdrop{position:fixed;inset:0;background:rgba(4,10,13,.82);backdrop-filter:blur(8px)}
-.price-modal-dialog{position:relative;width:min(860px,100%);max-height:92vh;overflow-y:auto;background:#0d181e;border:1px solid #233742;border-radius:16px;padding:28px;box-shadow:0 30px 100px rgba(0,0,0,.7);z-index:2;display:flex;flex-direction:column;gap:20px}
-.price-modal-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.price-modal-dialog{position:relative;width:min(860px,100%);max-height:92vh;overflow:hidden;background:#0d181e;border:1px solid #233742;border-radius:16px;box-shadow:0 30px 100px rgba(0,0,0,.7);z-index:2;display:flex;flex-direction:column}
+.price-modal-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:28px;flex:none;background:#0d181e;z-index:3}
+.price-modal-body{display:flex;flex-direction:column;gap:20px;min-height:0;overflow-y:auto;padding:0 28px 28px;overscroll-behavior:contain}
 .modal-game-info{display:flex;align-items:center;gap:16px}
 .modal-cover{width:92px;height:92px;border-radius:10px;overflow:hidden;flex:none;background:#152229;box-shadow:0 10px 28px rgba(0,0,0,.35)}
 .modal-cover.steam-cover{width:184px;height:70px;aspect-ratio:231/87;border-radius:8px}
@@ -41,12 +42,12 @@
 .modal-game-info h3{margin:0;font-size:20px;font-weight:700;line-height:1.35;color:var(--text)}
 .modal-close{width:36px;height:36px;border-radius:8px;border:1px solid #283e49;background:#14232a;color:var(--muted);font-size:22px;display:grid;place-items:center;cursor:pointer;transition:.2s;line-height:1}
 .modal-close:hover{color:#fff;border-color:var(--mint);background:#1a2e37}
-.modal-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.modal-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .modal-metric{padding:14px 16px;background:rgba(21,37,45,.6);border:1px solid rgba(41,64,73,.7);border-radius:10px;display:flex;flex-direction:column;gap:4px}
 .modal-metric.accent-low{border-color:rgba(159,232,38,.35);background:rgba(159,232,38,.05)}
 .modal-metric.accent-low .m-val{color:#a2e005}
 .m-label{font-size:11px;color:var(--muted);font-weight:600}
-.m-val{font:700 21px "DM Mono";color:var(--text);white-space:nowrap}
+.m-val{font:700 21px "DM Mono";color:var(--text);overflow-wrap:anywhere}
 .m-sub{font-size:11px;color:var(--muted);font-family:"DM Mono"}
 .chart-card{background:#111e26;border:1px solid #233742;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
 .chart-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
@@ -55,8 +56,16 @@
 .legend-line{display:inline-block;width:20px;height:3px;background:#a2e005;border-radius:2px}
 .legend-dashed{display:inline-block;width:20px;height:0;border-top:2px dashed #3898ec}
 .chart-tip{font-size:11px;color:#6b828b;font-family:"DM Mono"}
-.chart-canvas-container{position:relative;width:100%;height:220px;background:#0d171d;border:1px solid #1c2e38;border-radius:8px;overflow:hidden}
+.chart-canvas-container{position:relative;width:100%;height:240px;background:#0d171d;border:1px solid #1c2e38;border-radius:8px;overflow:hidden}
 .chart-svg{width:100%;height:100%;display:block}
+.chart-svg [hidden]{display:none}
+.price-chart-tooltip{position:absolute;left:0;top:8px;max-width:100%;padding:6px 8px;background:#14232c;color:#edf7f4;border:1px solid #314d5c;border-radius:4px;font-size:12px;pointer-events:none;will-change:transform}
+.chart-header{flex-wrap:wrap;gap:12px}
+.chart-ranges{display:flex;gap:6px;flex-wrap:wrap}
+.chart-ranges button{padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:#0a1418;color:var(--muted);font:inherit;font-size:12px;cursor:pointer}
+.chart-ranges button.active{color:var(--mint);border-color:#31524b;background:#192b2a}
+.chart-coverage{margin:10px 0 0;color:var(--muted);font-size:11px}
+.history-empty{padding:20px;color:#9baeb2}
 .history-table-section{display:flex;flex-direction:column;gap:10px}
 .history-section-header{display:flex;justify-content:space-between;align-items:center}
 .history-section-header h4{margin:0;font-size:14px;color:var(--text)}
@@ -66,7 +75,7 @@
 .history-table th{background:#101d24;position:sticky;top:0;padding:9px 14px;font-size:11px;color:var(--muted);border-bottom:1px solid #20333d}
 .history-table td{padding:9px 14px;border-bottom:1px solid #16242c;font-family:"DM Mono"}
 .history-table tr:hover{background:#112028}
-@media(max-width:640px){.modal-metrics{grid-template-columns:1fr 1fr}.price-modal-dialog{padding:18px}}
+@media(max-width:640px){.modal-metrics{grid-template-columns:1fr 1fr}.price-modal-header{padding:18px}.price-modal-body{padding:0 18px 18px}}
 
 /* PS5 多版本折叠展开卡片与按钮样式 */
 .editions-toggle-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(109,156,255,.12);border:1px solid rgba(109,156,255,.32);color:#8bb3ff;border-radius:6px;padding:3px 9px;font:600 11px "DM Mono","Noto Sans SC",sans-serif;cursor:pointer;transition:.2s;user-select:none;margin-top:5px;line-height:1.4}
@@ -99,7 +108,7 @@
 
 /* ================= 官方矢量平台图标体系 ================= */
 .plat-icon{width:17px;height:17px;flex:none;display:inline-block;vertical-align:middle;transition:transform .18s ease,color .18s ease;color:#6f8690}
-.plat-icon.switch2-icon{width:25px;height:15px}
+.plat-icon.switch2-icon{width:31px;height:17px}
 .platform-tab:hover .plat-icon{transform:scale(1.08)}
 .platform-tab:hover .switch-icon{color:#ff4757}
 .platform-tab:hover .switch2-icon{color:#ff5e6d}
@@ -144,9 +153,6 @@ th.col-history[hidden], td.col-history[hidden] { display: none !important; }
 
 .cover.hk-cover{width:206px;height:116px;aspect-ratio:16/9;border-radius:8px;background:#0e1922}
 .cover.hk-cover img{object-fit:contain;object-position:center;border-radius:8px;background:#0e1922}
-.cover-preview{position:fixed;z-index:30;padding:8px;border:1px solid #3b5660;border-radius:8px;background:#071115;box-shadow:0 22px 60px rgba(0,0,0,.65);pointer-events:none}
-.cover-preview[hidden]{display:none}
-.cover-preview img{display:block;max-width:none;max-height:none;object-fit:contain;border-radius:3px}
 
 @media(max-width:760px){
   .cover.hk-cover{width:164px;height:92px;aspect-ratio:16/9}
@@ -154,3 +160,306 @@ th.col-history[hidden], td.col-history[hidden] { display: none !important; }
   .toolbar-inner .subtabs{width:100%}
   .toolbar-inner .subtabs .subtab{flex:1;justify-content:center;white-space:nowrap}
 }
+
+.mobile-game-actions,.mobile-game-price,.mobile-wide-side{display:none}
+.wide-cover-left{display:contents}
+/* 手机榜单：平台和商店利用封面下方空间，价格与无边框走势共用右侧。 */
+@media(max-width:760px){
+  .shell{width:calc(100% - 20px);padding-top:22px}
+  .toolbar-inner{gap:8px}
+  .tools{flex-direction:row;gap:6px}
+  .tools .search{flex:1 1 100%;min-width:0;width:100%}
+  .tools .search input{font-size:16px}
+  .tools select{flex:1;min-width:0;width:auto}
+  .deal-filter-btn,.ps4-filter-btn{height:36px;padding:0 9px;font-size:12px;gap:5px}
+  .table-heading{padding:15px 12px;gap:8px}
+  .table-heading>div{min-width:0}
+  .table-heading h2{font-size:16px}
+  .section-kicker{font-size:10px;letter-spacing:.06em}
+  .region-pill{flex:none;font-size:10px;padding:5px 6px}
+  .table-scroll{overflow:visible}
+  .table-scroll>table{display:block;width:100%;min-width:0}
+  .table-scroll>table>thead,.table-scroll>table>tbody{display:block}
+  .table-scroll>table>thead>tr,
+  #gameRows>tr:not(.edition-drawer-row){display:grid;grid-template-columns:22px minmax(0,1fr);gap:0 7px;padding:7px 9px;border-bottom:1px solid var(--line);align-items:start}
+  .table-scroll>table>thead>tr{grid-template-columns:22px minmax(0,1fr) auto}
+  .table-scroll>table>thead>tr{padding-top:9px;padding-bottom:9px}
+  .table-scroll>table>thead>tr>th,
+  #gameRows>tr:not(.edition-drawer-row)>td{display:block;min-width:0;padding:0;border:0}
+  .table-scroll>table>thead>tr>th:nth-child(3),
+  .table-scroll>table>thead>tr>th:nth-child(n+5){display:none}
+  .table-scroll>table>thead>tr>th:nth-child(4){text-align:right}
+  .table-scroll>table>thead>tr>th:first-child{font-size:10px;letter-spacing:0;white-space:nowrap}
+  #gameRows>tr:not(.edition-drawer-row)>td:nth-child(1){grid-column:1;grid-row:1 / span 2;align-self:start;padding-top:2px}
+  #gameRows>tr:not(.edition-drawer-row)>td:nth-child(2){grid-column:2;grid-row:1}
+  #gameRows>tr:not(.edition-drawer-row)>td:nth-child(3){display:none}
+  #gameRows>tr:not(.edition-drawer-row)>td:nth-child(4){display:none}
+  #gameRows>tr:not(.edition-drawer-row)>td:nth-child(5):not(:last-child){display:none}
+  #gameRows>tr:not(.edition-drawer-row)>td:last-child{display:none}
+  #gameRows .rank{font-size:13px}
+  #gameRows .game-cell{display:grid;grid-template-columns:68px minmax(0,1fr);min-width:0;gap:2px 8px;align-items:start}
+  #gameRows .game-copy{display:contents}
+  #gameRows .cover,#gameRows .cover.ps-cover{grid-column:1;grid-row:1 / span 4;width:68px;height:68px;border-radius:6px;font-size:18px;box-shadow:none}
+  #gameRows .cover.steam-cover{width:68px;height:26px;aspect-ratio:231/87}
+  #gameRows .cover.hk-cover{width:68px;height:38px;aspect-ratio:16/9}
+  #gameRows .cover img{border-radius:6px}
+  #gameRows .game-name{grid-column:2;grid-row:1;font-size:13px;line-height:1.35;max-width:none;overflow-wrap:anywhere;-webkit-line-clamp:2}
+  #gameRows .game-original{grid-column:2;grid-row:2;font-size:10px;line-height:1.3;max-width:none;overflow-wrap:anywhere;-webkit-line-clamp:1}
+  #gameRows .game-copy>div{grid-column:2;grid-row:4;gap:4px!important;margin-top:0!important}
+  #gameRows .game-copy>.mobile-game-price{display:block;grid-column:2;grid-row:3}
+  #gameRows .game-meta{display:none}
+  #gameRows .mobile-game-actions{display:inline-flex;flex:1;min-width:0;align-items:center;gap:4px;font-size:9px;line-height:20px;color:var(--muted)}
+  #gameRows .mobile-game-actions a{color:var(--mint);text-decoration:none;padding:0 2px}
+  #gameRows .edition-badge,#gameRows .lang-chip{font-size:9px;padding:1px 3px;letter-spacing:0}
+  #gameRows .platform-chip{font-size:9px;padding:3px 5px}
+  #gameRows .price-stack{min-width:0;gap:2px;align-items:flex-end}
+  #gameRows .mobile-game-price .price-stack{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:2px 5px}
+  #gameRows .mobile-game-price .deal-chip{order:0}
+  #gameRows .mobile-game-price .price-main{order:1}
+  #gameRows .mobile-game-price .price-old{order:2}
+  #gameRows .mobile-game-price .price-cny{order:3;flex-basis:auto}
+  #gameRows .price-main{font-size:14px}
+  #gameRows .price-old,#gameRows .price-cny{font-size:10px}
+  #gameRows .deal-chip{height:19px;font-size:10px;padding:0 5px}
+  #gameRows .store-link{width:26px;height:30px;font-size:16px}
+  #gameRows .spark-cell{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;min-width:0;width:100%;min-height:28px;padding:3px 0;gap:4px;border:0;background:none;border-radius:0;box-shadow:none}
+  #gameRows .mobile-game-actions .spark-cell{margin-left:0;width:72px;flex:none;min-height:20px;padding:0}
+  #gameRows .spark-cell:hover{border:0;background:none;box-shadow:none}
+  #gameRows .spark-meta{order:2;gap:0}
+  #gameRows .spark-meta>:first-child{display:none}
+  #gameRows .mini-sparkline{width:52px;height:14px;flex:1;min-width:0;max-width:52px}
+  #gameRows .spark-hint{font-size:9px;white-space:nowrap}
+  #gameRows .trend-pill,#gameRows .discount-pill{font-size:9px;padding:1px 3px}
+  .table-footer{padding:12px 10px;font-size:10px;gap:7px}
+  .table-footer>span:last-child{flex-basis:100%;overflow-wrap:anywhere}
+  .pagination{margin-left:auto;margin-right:0}
+  #gameRows>.edition-drawer-row:not([hidden]){display:block}
+  #gameRows .edition-drawer-cell{display:block;padding:0 8px 12px!important}
+  .editions-card-header{padding:8px;font-size:11px;flex-wrap:wrap;gap:4px}
+  .editions-subtable{display:block;min-width:0}
+  .editions-subtable thead{display:none}
+  .editions-subtable tbody{display:block}
+  .editions-subtable tbody>tr{display:grid;grid-template-columns:minmax(0,1fr) 104px;gap:8px;padding:10px 8px}
+  .editions-subtable tbody>tr>td{display:block;padding:0;min-width:0;border:0}
+  .editions-subtable tbody>tr>td:nth-child(1){grid-column:1;grid-row:1}
+  .editions-subtable tbody>tr>td:nth-child(2){grid-column:1;grid-row:2}
+  .editions-subtable tbody>tr>td:nth-child(3){grid-column:2;grid-row:1}
+  .editions-subtable tbody>tr>td:nth-child(4):not(:last-child){grid-column:2;grid-row:2}
+  .editions-subtable tbody>tr>td:last-child{grid-column:1;grid-row:3}
+  .edition-tag{flex-wrap:wrap;gap:4px}
+  .edition-raw-title{overflow-wrap:anywhere}
+}
+@media(max-width:470px){
+  .overview{grid-template-columns:1fr 1fr}
+  .metric{padding:13px 12px;min-height:80px}
+  .metric-wide,.metric:nth-child(4){grid-column:1/-1}
+  .metric-label{margin-bottom:8px}
+  .metric strong{font-size:24px}
+  .metric:nth-child(3){border-left:1px solid var(--line)}
+  .intro h1{font-size:30px}
+  .intro-copy{font-size:12px;margin-top:12px}
+}
+@media(max-width:360px){
+  .table-scroll>table>thead>tr{grid-template-columns:22px minmax(0,1fr) auto}
+  #gameRows>tr:not(.edition-drawer-row){grid-template-columns:20px minmax(0,1fr);column-gap:6px;padding-left:8px;padding-right:8px}
+  #gameRows .cover,#gameRows .cover.ps-cover{width:58px;height:58px}
+  #gameRows .game-cell{grid-template-columns:58px minmax(0,1fr);column-gap:6px}
+  #gameRows .cover.steam-cover{width:58px;height:22px}
+  #gameRows .cover.hk-cover{width:58px;height:33px}
+  #gameRows .mobile-game-actions{flex-basis:100%;flex-grow:0}
+  #gameRows .price-main{font-size:13px}
+}
+
+/* 横向封面使用左侧整列，名称在图下，右侧信息独立排列。 */
+@media(max-width:760px){
+  #gameRows .wide-cover-row .game-cell{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:3px 8px}
+  #gameRows .wide-cover-row .cover{grid-column:1;grid-row:1;width:100%;height:auto;align-self:start}
+  #gameRows .wide-cover-row .cover.steam-cover{aspect-ratio:231/87}
+  #gameRows .wide-cover-row .cover.hk-cover{aspect-ratio:16/9}
+  #gameRows .wide-cover-row .game-name{grid-column:1;grid-row:2;-webkit-line-clamp:3}
+  #gameRows .wide-cover-row .game-original{grid-column:1;grid-row:3}
+  #gameRows .wide-cover-row .game-copy>div{display:none!important}
+  #gameRows .wide-cover-row .mobile-wide-side{grid-column:2;grid-row:1 / span 3;display:flex;flex-direction:column;align-items:stretch;gap:4px;min-width:0}
+  #gameRows .mobile-wide-side>.mobile-game-price{display:block}
+  #gameRows .mobile-wide-side .price-stack{align-items:center}
+  #gameRows .mobile-wide-side .price-main{white-space:normal;overflow-wrap:anywhere}
+  #gameRows .mobile-wide-side .price-cny{flex-basis:100%;white-space:normal;overflow-wrap:anywhere}
+  #gameRows .mobile-wide-badges{display:flex;flex-wrap:wrap;gap:3px}
+  #gameRows .mobile-wide-badges:empty{display:none}
+  #gameRows .mobile-wide-side .mobile-game-actions{flex:0 0 auto;flex-wrap:wrap;row-gap:0}
+  #gameRows .mobile-wide-side .mobile-platform-line{flex-basis:100%;display:flex;align-items:center;flex-wrap:wrap;gap:3px}
+  #gameRows .mobile-wide-side .spark-cell{width:68px}
+}
+@media(max-width:360px){
+  #gameRows .mobile-wide-side .price-main{font-size:12px}
+  #gameRows .mobile-wide-side .deal-chip{font-size:9px;padding:0 4px}
+  #gameRows .mobile-wide-side .mobile-game-price .price-stack{column-gap:4px}
+  #gameRows .mobile-wide-side .spark-cell{width:62px}
+}
+
+.overview{grid-template-columns:minmax(0,2fr) minmax(0,.6fr) minmax(0,.8fr)}
+@media(max-width:1050px){.overview{grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr) minmax(0,1fr)}}
+@media(max-width:760px){
+  .overview{grid-template-columns:1fr 1fr}
+  .intro h1{white-space:nowrap;font-size:clamp(26px,7.5vw,39px)}
+  .intro h1 span{display:inline;margin:0 0 0 .24em}
+  .toolbar-inner{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:7px 5px;align-items:center}
+  .toolbar-inner .tools{display:contents}
+  .toolbar-inner>.subtabs,.toolbar-inner>#singleRegionTab{grid-column:1;grid-row:1;min-width:0;width:auto;gap:4px;justify-self:start}
+  .toolbar-inner .subtabs .subtab{flex:none;padding:0 6px;font-size:12px;height:34px}
+  #includeFreeDealsBtn{grid-column:2;grid-row:1}
+  #dealToggleBtn{grid-column:3;grid-row:1}
+  .tools .deal-filter-btn{height:34px;padding:0 6px;font-size:11px;gap:3px}
+  .tools .deal-count-badge{font-size:10px;min-width:14px;padding:2px 4px}
+  .tools .search{grid-column:1 / span 2;grid-row:2;min-width:0;width:100%;height:36px}
+  .tools #sortSelect{grid-column:3;grid-row:2;min-width:0;width:100%;height:36px;padding-left:7px;padding-right:25px;font-size:11px;background-position:right 7px center}
+  #includePs4Btn{grid-column:1 / -1;grid-row:3;justify-self:start;height:30px}
+  #gameRows .no-original-name .cover{grid-row:1 / span 3}
+  #gameRows .no-original-name .game-copy>.mobile-game-price{grid-row:2}
+  #gameRows .no-original-name .game-copy>div:not(.mobile-game-price){grid-row:3}
+  #gameRows .wide-cover-row .no-original-name .cover{grid-row:1}
+  #gameRows .wide-cover-row .no-original-name .mobile-wide-side{grid-row:1 / span 2}
+}
+
+#includeFreeDealsBtn[hidden]{display:none!important}
+@media(max-width:760px){
+  .toolbar-inner .subtabs .subtab{min-width:50px;padding:0 10px}
+  #dealToggleBtn{justify-self:stretch;width:100%;justify-content:center}
+  .toolbar-inner.no-free-games{grid-template-columns:minmax(0,1fr) auto}
+  .toolbar-inner.no-free-games #dealToggleBtn{grid-column:2}
+  .toolbar-inner.no-free-games .search{grid-column:1}
+  .toolbar-inner.no-free-games #sortSelect{grid-column:2}
+  #gameRows .wide-cover-row .game-original{display:none}
+  #gameRows .mobile-wide-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;line-height:1.35;color:var(--muted)}
+  #gameRows .mobile-price-platform{color:var(--muted);font-size:9px}
+}
+@media(max-width:360px){.toolbar-inner .subtabs .subtab{min-width:44px;padding:0 8px}}
+
+@media(max-width:760px){
+  #gameRows>tr.wide-cover-row{padding-bottom:2px}
+  #gameRows .wide-cover-row .wide-cover-left{display:flex;flex-direction:column;grid-column:1;grid-row:1;align-self:start;gap:3px;min-width:0}
+  #gameRows .wide-cover-row .game-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;max-width:100%}
+  #gameRows .wide-cover-row .mobile-wide-side,
+  #gameRows .wide-cover-row .no-original-name .mobile-wide-side{grid-row:1;align-self:start;gap:3px}
+  #gameRows .wide-cover-row .game-cell{row-gap:0}
+}
+.price-modal-header{flex-direction:column;gap:12px}
+.modal-topline{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:0}
+.modal-topline .modal-eyebrow{margin:0;min-width:0}
+.modal-topline .modal-close{flex:none}
+.modal-game-info,.modal-titles{min-width:0}
+.modal-game-info{width:100%}
+.modal-titles{overflow-wrap:anywhere}
+.mobile-wide-title{display:none}
+@media(max-width:760px){
+  #clearCacheButton{width:auto;flex:none;padding:0 9px;white-space:nowrap;font-size:12px}
+  .platform-tab{white-space:nowrap;min-width:0;padding:0 6px;gap:4px;font-size:12px}
+  .platform-switch{flex-wrap:nowrap}
+  .platform-tab .plat-icon{flex:none;width:20px;height:20px}
+  #gameRows .hk-wide-row .game-cell{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}
+  #gameRows .hk-wide-row .wide-cover-left .game-name{display:none}
+  #gameRows .hk-wide-row .mobile-wide-title{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;font-weight:700;line-height:1.35}
+  #gameRows .hk-wide-row .mobile-wide-side .mobile-game-actions{flex-wrap:nowrap;gap:2px;line-height:18px;font-size:8px}
+  #gameRows .hk-wide-row .mobile-platform-line{flex-basis:auto;flex-wrap:nowrap;gap:2px;white-space:nowrap}
+  #gameRows .hk-wide-row .edition-badge,#gameRows .hk-wide-row .lang-chip{font-size:8px;padding:0 2px;white-space:nowrap}
+  #gameRows .hk-wide-row .mobile-game-actions a{white-space:nowrap;padding:0}
+  #gameRows .hk-wide-row .spark-cell{width:32px;flex:1;min-width:16px}
+  #gameRows .hk-wide-row .spark-meta{display:none}
+  .price-modal{padding:8px}
+  .price-modal-dialog{max-height:96dvh;border-radius:10px}
+  .price-modal-header{padding:10px;gap:8px}
+  .modal-cover,.modal-cover.ps-cover{width:58px;height:58px}
+  .modal-cover.steam-cover{width:105px;height:40px}
+  .modal-game-info{gap:10px}
+  .modal-game-info h3{font-size:15px}
+  .modal-game-info .game-original{font-size:10px;margin:3px 0 0}
+  .modal-topline .modal-meta-text{font-size:11px}
+  .modal-topline .platform-chip{font-size:10px;padding:4px 6px}
+  .price-modal-body{padding:0 10px 10px;gap:12px}
+  .modal-metrics{grid-template-columns:1fr 1fr;gap:6px}
+  .modal-metric{padding:8px;gap:2px}
+  .m-val{font-size:17px}
+  .chart-card{padding:10px;gap:8px}
+  .chart-legend{font-size:9px;gap:8px;flex-wrap:wrap}
+  .legend-item{gap:4px}
+  .history-table-wrap{max-height:240px}
+  .history-table,.history-table tbody{display:block}
+  .history-table thead{display:none}
+  .history-table tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 8px;padding:8px;border-bottom:1px solid #20333d}
+  .history-table td{display:block;min-width:0;border:0;padding:0!important;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+  .history-table td:first-child{grid-column:1;grid-row:1;color:var(--muted);font-size:10px}
+  .history-table td:nth-child(2){grid-column:2;grid-row:1;font-size:13px;text-align:right}
+  .history-table td:nth-child(3){grid-column:2;grid-row:2;text-align:right;font-size:10px}
+  .history-table td:nth-child(3)::before{content:'≈ ';color:var(--muted)}
+  .history-table .history-change{grid-column:1;grid-row:2}
+}
+@media(max-width:760px){
+  #gameRows .hk-wide-row .mobile-wide-side .mobile-game-price .deal-chip{display:none}
+  #gameRows .hk-wide-row .mobile-wide-side .mobile-game-price .price-stack{display:flex;flex-wrap:nowrap;align-items:center;gap:3px}
+  #gameRows .hk-wide-row .mobile-wide-side .price-old{display:inline;flex:none;white-space:nowrap;font-size:10px;line-height:1.2;text-decoration:line-through}
+  #gameRows .hk-wide-row .mobile-wide-side .price-main{white-space:nowrap;flex:none;font-size:14px}
+  #gameRows .hk-wide-row .mobile-wide-side .price-cny{flex-basis:auto;white-space:nowrap;font-size:10px}
+  #gameRows .hk-wide-row .mobile-game-actions>.deal-chip{flex:none;font-size:8px;height:17px;padding:0 3px}
+  #gameRows .hk-wide-row .mobile-wide-side .mobile-game-actions{gap:2px;font-size:8px}
+  #gameRows .hk-wide-row .edition-badge,#gameRows .hk-wide-row .lang-chip{font-size:8px;padding:0 1px}
+  #gameRows .hk-wide-row .spark-cell{width:24px;min-width:12px}
+}
+@media(max-width:360px){
+  #gameRows .hk-wide-row .mobile-wide-side .price-main{font-size:13px}
+  #gameRows .hk-wide-row .game-cell{grid-template-columns:minmax(0,.65fr) minmax(0,1.35fr);column-gap:5px}
+  #gameRows .hk-wide-row .mobile-wide-side .mobile-game-price .price-stack{gap:2px}
+}
+@media(max-width:760px){
+  .insights{gap:8px;align-items:start}
+  .best-deal{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;padding:12px;min-width:0}
+  .best-deal .insight-top{grid-column:1 / -1;font-size:11px}
+  .best-deal .spark{font-size:13px}
+  .best-deal>strong{grid-column:1;grid-row:2 / span 2;align-self:center;font-size:28px;line-height:1;margin:0;letter-spacing:-.04em}
+  .best-deal h3{grid-column:2;margin:0;min-width:0;font-size:12px;line-height:1.4;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .best-deal p{grid-column:2;margin:0;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+  .best-deal del{margin-right:4px}
+}
+.metric-detail{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;margin-top:9px;font-size:11px;color:var(--muted)}
+.metric .metric-detail strong{font-size:13px;line-height:1.4;color:var(--text);white-space:nowrap}
+.metric .metric-detail small{margin-left:0;font-size:10px}
+.metric .metric-footnote{display:block;margin:3px 0 0;font-size:10px;color:var(--muted)}
+@media(max-width:760px){
+  .overview>.metric:not(.metric-wide){padding:12px;min-height:0}
+  .overview>.metric:not(.metric-wide) .metric-label{margin-bottom:8px}
+  .metric-detail{margin-top:6px;gap:3px 6px}
+  .metric .metric-detail strong{font-size:12px}
+}
+.capacity-head,.capacity-values{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.capacity-head .metric-label:last-child{text-align:right}
+.capacity-values>div,.capacity-values>strong{white-space:nowrap}
+.capacity-values>strong{font-size:18px;color:var(--mint)}
+@media(max-width:760px){
+  .capacity-head .metric-label{font-size:11px}
+  .capacity-values>strong{font-size:18px}
+  .capacity-values small{font-size:10px;margin-left:2px}
+  .metric #discountRateSub{display:none!important}
+}
+
+@media(max-width:760px){.platform-tab .plat-icon.switch2-icon{width:36px;height:20px}}
+@media(max-width:760px){
+  .overview>.metric-wide{padding-left:12px;padding-right:12px}
+  .platform-switch{justify-content:space-between;gap:4px}
+  .platform-tab{flex:0 0 auto;padding-left:3px;padding-right:3px}
+}
+@media(max-width:360px){
+  .platform-tab{padding-left:0;padding-right:0;font-size:11px;gap:3px}
+}
+.refresh-notice{margin:0;padding:8px 18px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+@media(max-width:760px){
+  #gameRows .steam-wide-row .wide-cover-left .game-copy{display:none}
+  #gameRows .steam-wide-row .mobile-wide-title{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;font-weight:700;line-height:1.35}
+  #gameRows .steam-wide-row .mobile-wide-side .price-cny{display:none}
+  #gameRows .steam-wide-row .mobile-wide-side .mobile-game-actions{flex-wrap:nowrap;gap:4px;min-width:0;white-space:nowrap}
+  #gameRows .steam-wide-row .mobile-platform-line{flex-basis:auto;flex:none}
+  #gameRows .steam-wide-row .mobile-game-actions a{flex:none;padding:0}
+  #gameRows .steam-wide-row .mobile-game-actions .spark-cell{flex:1;min-width:20px;width:auto}
+  #gameRows .steam-wide-row .spark-meta{display:flex;flex:none}
+}
+.refresh-notice[data-state="failed"]{color:#ffb347;background:rgba(255,179,71,.07)}
+.refresh-notice[data-state="refreshing"]{color:var(--mint)}
+@media(max-width:760px){.refresh-notice{padding:6px 12px;font-size:11px}}

@@ -1,5 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { storeFetch } from './polite-fetch.mjs';
 
 const COLORS = ['#365d83', '#b13a84', '#3163b5', '#8b5689', '#705137', '#7768d8', '#4c8550', '#b74752', '#0d6978', '#990000'];
 
@@ -35,12 +36,22 @@ function decodeHtmlText(value) {
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
 }
 
-export function extractProductPrice(html, productId) {
+export function extractProductPrice(html, productId, { currency = 'HKD' } = {}) {
   for (const match of html.matchAll(/<script\b[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/gi)) {
     try {
       const cache = JSON.parse(match[1]).cache;
       const activeCtaId = cache?.[`Product:${productId}`]?.activeCtaId;
-      const price = activeCtaId && cache[`GameCTA:${activeCtaId}`]?.price;
+      // 默认按钮可能是会员试玩/游戏目录；只读取相同 SKU 的独立购买价格。
+      const candidates = Object.entries(cache || {}).filter(([key, cta]) => {
+        if (!key.startsWith('GameCTA:') || !key.includes(`:${productId}-`)) return false;
+        const price = cta.price;
+        return price && !price.isTiedToSubscription && !price.isExclusive
+          && !/UPSELL|TRIAL|SUBSCRIBE|PS_PLUS/i.test(cta.type || key)
+          && (price.currencyCode === currency || /免費|免费|無料|Free/i.test(price.discountedPrice || '')
+            || (currency === 'HKD' ? /HK\$/ : /[¥￥]/).test(price.discountedPrice || ''));
+      });
+      candidates.sort(([a], [b]) => Number(b === `GameCTA:${activeCtaId}`) - Number(a === `GameCTA:${activeCtaId}`));
+      const price = candidates[0]?.[1]?.price;
       if (price?.discountedPrice) {
         return {
           discountedPrice: price.discountedPrice,
@@ -56,15 +67,15 @@ export function extractProductPrice(html, productId) {
   return null;
 }
 
-async function fetchPsProductVersion(product, parent, signal) {
+async function fetchPsProductVersion(product, parent, signal, request, locale = 'zh-hans-hk', currency = 'HKD') {
   const id = product?.id;
   if (!id) return null;
   try {
-    const response = await fetch(`https://store.playstation.com/zh-hans-hk/product/${id}`, {
+    const response = await request(`https://store.playstation.com/${locale}/product/${id}`, {
       signal,
       headers: {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36',
-        'accept-language': 'zh-HK'
+        'accept-language': locale === 'ja-jp' ? 'ja-JP' : 'zh-HK'
       }
     });
     if (!response.ok) return null;
@@ -74,15 +85,24 @@ async function fetchPsProductVersion(product, parent, signal) {
     const isDemo = /\bDEMO\b|試玩版|体验版|试玩版/i.test(title) || /DEMO|TRIAL|体験版/i.test(id);
     const price = isDemo
       ? { discountedPrice: '免费', basePrice: '免费', isFree: true }
-      : extractProductPrice(html, id);
+      : extractProductPrice(html, id, { currency });
     if (!title || !price) return null;
+    let languages = [];
+    for (const match of html.matchAll(/<script\b[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/gi)) {
+      try {
+        const detail = JSON.parse(match[1]).cache?.[`Product:${id}`];
+        if (detail?.screenLanguages) languages = detail.screenLanguages;
+      } catch {}
+    }
     return {
       ...parent,
       id,
       name: title || parent.name,
       rawName: title || parent.name,
       price,
-      url: `https://store.playstation.com/zh-hans-hk/product/${id}`
+      platforms: /-CUSA/i.test(id) ? ['PS4'] : /-PPSA/i.test(id) ? ['PS5'] : parent.platforms,
+      hasChinese: languages.some(lang => /^(?:zh|ch|zh-hans|zh-hant)$/i.test(lang)),
+      url: `https://store.playstation.com/${locale}/product/${id}`
     };
   } catch {
     return null;
@@ -104,7 +124,7 @@ function pickCoverImage(product) {
 }
 
 function mapPsProduct(product, index) {
-  if (product.cachedGame) return { ...product.cachedGame, rank: product.storePosition, trend: 'same' };
+  if (product.cachedGame) return { ...product.cachedGame, conceptId: product.conceptId || product.cachedGame.conceptId, priceStale:true, rank: product.storePosition, trend: 'same' };
   const cleanName = cleanGameName(product.name);
   const discountedStr = product.price?.discountedPrice || product.price?.basePrice || '';
   const baseStr = product.price?.basePrice || '';
@@ -132,6 +152,7 @@ function mapPsProduct(product, index) {
 
   return {
     id: product.id || `ps5-${index + 1}`,
+    conceptId: product.conceptId,
     rawName: product.name,
     rank: product.storePosition || index + 1,
     name: cleanName,
@@ -146,24 +167,58 @@ function mapPsProduct(product, index) {
     color: COLORS[index % COLORS.length],
     image,
     verified: true,
-    url: product.id ? `https://store.playstation.com/zh-hans-hk/product/${product.id}` : 'https://store.playstation.com/zh-hans-hk/pages/browse'
+    hasChinese: Boolean(product.hasChinese),
+    url: product.url || (product.id ? `https://store.playstation.com/zh-hans-hk/product/${product.id}` : 'https://store.playstation.com/zh-hans-hk/pages/browse')
   };
 }
 
 export class PlayStationCollector {
-  constructor({ cacheFile, refreshMinutes = 15 } = {}) {
+  constructor({ cacheFile, refreshMinutes = 60, fallbackFile = new URL('../../dist/ps5-data.js', import.meta.url), request = storeFetch, region = 'hk' } = {}) {
     this.cacheFile = cacheFile || path.resolve('data/ps5-cache.json');
     this.refreshMinutes = Math.max(5, Number(refreshMinutes) || 15);
     this.cache = null;
     this.refreshing = null;
+    this.fallbackFile = fallbackFile;
+    this.request = request;
+    this.region = region;
   }
 
   async init() {
     await mkdir(path.dirname(this.cacheFile), { recursive: true });
     try {
       this.cache = JSON.parse(await readFile(this.cacheFile, 'utf8'));
+      if (this.cache.sourceType === 'PlayStation Store 港服官方商店') {
+        for (const game of this.cache.games || []) game.conceptId ||= `legacy-rank-${game.rank}`;
+      }
     } catch {
       this.cache = null;
+    }
+    // 仅恢复有来源时间的已验证价格；实时缓存中的同一 SKU 优先。
+    try {
+      if (this.cache && this.cache.sourceType !== 'PlayStation Store 港服官方商店') return;
+      const source = await readFile(this.fallbackFile, 'utf8');
+      const seed = JSON.parse(source.replace(/^window\.PS5_HK_GAMES\s*=\s*/, '').replace(/;\s*$/, ''));
+      const current = new Map((this.cache?.games || []).map(game => [game.id, game]));
+      const concepts = new Map();
+      for (const game of seed) {
+        const live = current.get(game.id);
+        if (live?.conceptId) concepts.set(game.conceptId || `legacy-rank-${game.rank}`, live.conceptId);
+      }
+      let restored = 0;
+      for (const game of seed) {
+        if (current.has(game.id) || game.verified !== true || !Number.isFinite(Date.parse(game.priceUpdatedAt))) continue;
+        const legacy = game.conceptId || `legacy-rank-${game.rank}`;
+        current.set(game.id, { ...game, conceptId: concepts.get(legacy) || legacy, priceStale: true });
+        restored++;
+      }
+      if (restored) {
+        this.cache = { ...this.cache, platform: 'ps5', sourceType: 'PlayStation Store 港服官方商店',
+          games: [...current.values()], count: current.size, stale: true,
+          lastError: `已恢复 ${restored} 条历史验证商品，待官方价格更新` };
+        await this.#save();
+      }
+    } catch {
+      // 静态快照缺失时继续使用运行缓存和官方采集。
     }
   }
 
@@ -187,7 +242,10 @@ export class PlayStationCollector {
 
   async #collect() {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 90000);
+    const timeout = setTimeout(() => controller.abort(), 35 * 60 * 1000);
+    const request = this.request;
+    const jp = this.region === 'jp';
+    const locale = jp ? 'ja-jp' : 'zh-hans-hk';
 
     async function fetchPage(offset, size) {
       const variables = {
@@ -198,15 +256,15 @@ export class PlayStationCollector {
         facetOptions: []
       };
       const url = `${DEFAULT_GRAPHQL_ENDPOINT}?operationName=categoryGridRetrieve&variables=${encodeURIComponent(JSON.stringify(variables))}&extensions=${encodeURIComponent(JSON.stringify({ persistedQuery: { version: 1, sha256Hash: DEFAULT_SHA256 } }))}`;
-      const response = await fetch(url, {
+      const response = await request(url, {
         signal: controller.signal,
         headers: {
           'content-type': 'application/json',
           'x-apollo-operation-name': 'categoryGridRetrieve',
-          'x-psn-store-locale-override': 'zh-Hant-HK',
+          'x-psn-store-locale-override': jp ? 'ja-JP' : 'zh-Hant-HK',
           'x-psn-app-ver': '@sie-ppr-web-store/app/0.114.0-',
           'referer': 'https://store.playstation.com/',
-          'accept-language': 'zh-HK',
+          'accept-language': jp ? 'ja-JP' : 'zh-HK',
           'accept': 'application/json',
           'apollographql-client-version': '0.114.0',
           'apollographql-client-name': '@sie-ppr-web-store/app',
@@ -239,41 +297,42 @@ export class PlayStationCollector {
       const expandedByConcept = new Array(rawProducts.length);
       let nextIndex = 0;
       let missingVersions = 0;
-      await Promise.all(Array.from({ length: 12 }, async () => {
+      await Promise.all(Array.from({ length: 1 }, async () => {
         while (nextIndex < rawProducts.length) {
           const sourceIndex = nextIndex++;
           const concept = rawProducts[sourceIndex];
-          const sourceConcept = { ...concept, storePosition: sourceIndex + 1 };
+          const sourceConcept = { ...concept, conceptId: concept.id, storePosition: sourceIndex + 1,
+            url: `https://store.playstation.com/${locale}/${/^\d+$/.test(concept.id) ? 'concept' : 'product'}/${concept.id}` };
           const versions = Array.isArray(concept.products) ? concept.products : [];
           if (!versions.length) {
             expandedByConcept[sourceIndex] = [sourceConcept];
             continue;
           }
-          const versionProducts = await Promise.all(versions.map(product => fetchPsProductVersion(product, sourceConcept, controller.signal)));
+          const versionProducts = [];
+          for (const product of versions) versionProducts.push(await fetchPsProductVersion(product, sourceConcept, controller.signal, request, locale, jp ? 'JPY' : 'HKD'));
           const usable = versionProducts.map((item, index) => {
             if (item) return item;
             missingVersions++;
             const cachedGame = previousGames.get(versions[index].id);
-            return cachedGame ? { cachedGame, storePosition: sourceIndex + 1 } : null;
+            return cachedGame ? { cachedGame:{...cachedGame,priceUpdatedAt:cachedGame.priceUpdatedAt||this.cache.updatedAt}, conceptId: sourceConcept.conceptId, storePosition: sourceIndex + 1 } : null;
           }).filter(Boolean);
-          if (concept.price?.isFree || /免費|free/i.test(concept.price?.discountedPrice || '')) usable.push(sourceConcept);
           expandedByConcept[sourceIndex] = usable;
         }
       }));
       const expandedProducts = expandedByConcept.flat();
       const games = expandedProducts
         .map((product, index) => mapPsProduct(product, index))
-        .filter(Boolean);
+        .filter(Boolean).map(game=>({...game,priceUpdatedAt:game.priceUpdatedAt||new Date().toISOString()}));
       if (!games.length) throw new Error('PlayStation 商品页未返回可验证的游戏数据');
       if (this.cache?.games?.length && games.length < this.cache.games.length * 0.8) {
         throw new Error(`仅获得 ${games.length}/${this.cache.games.length} 条商品，保留完整缓存`);
       }
 
       this.cache = {
-        platform: 'ps5',
-        label: 'PlayStation 5',
-        source: 'https://store.playstation.com/zh-hant-hk/pages/browse',
-        sourceType: 'PlayStation Store 港服官方商店',
+        platform: jp ? 'ps5_jp' : 'ps5',
+        label: jp ? 'PlayStation 5 日服' : 'PlayStation 5',
+        source: `https://store.playstation.com/${jp ? 'ja-jp' : 'zh-hant-hk'}/pages/browse`,
+        sourceType: `PlayStation Store ${jp ? '日服' : '港服'}官方商店`,
         officialLimit: 200,
         count: games.length,
         updatedAt: new Date().toISOString(),

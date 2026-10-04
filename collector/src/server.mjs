@@ -1,20 +1,32 @@
 import cors from 'cors';
+import { PriceHistory } from './price-history.mjs';
+import { TitleTranslator } from './title-translator.mjs';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { NintendoCollector, PLATFORM_CONFIG, HK_IMAGE_DIR } from './nintendo.mjs';
+import { NintendoCollector, PLATFORM_CONFIG } from './nintendo.mjs';
+import { nintendoCovers, nintendoImageUrl } from './nintendo-cover.mjs';
 import { PlayStationCollector } from './ps5.mjs';
 import { PlayStationJpCollector } from './ps5-jp.mjs';
 import { SteamCollector } from './steam.mjs';
 import { SteamGlobalCollector } from './steam-global.mjs';
+import { BackgroundRefresh } from './background-refresh.mjs';
+import { nextHourlyRefresh } from './hourly-schedule.mjs';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const collectorRoot = path.resolve(currentDir, '..');
+const priceHistory = new PriceHistory(process.env.PRICE_HISTORY_FILE || path.join(collectorRoot, 'data', 'price-history.sqlite'));
+await priceHistory.init();
+const titleTranslator = new TitleTranslator(path.join(collectorRoot, 'data', 'title-translations.sqlite'), { apiKey: process.env.GOOGLE_TRANSLATE_API_KEY });
+await titleTranslator.init();
 const app = express();
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || '0.0.0.0';
-let refreshMinutes = Math.max(5, Number(process.env.REFRESH_MINUTES) || 60);
+const refreshMinutes = 60;
 let refreshTimer;
+let nextRefreshAt = null;
+const backgroundRefresh = new BackgroundRefresh({ stateFile: path.join(collectorRoot, 'data', 'refresh-status.json') });
+await backgroundRefresh.init();
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*').split(',').map((item) => item.trim());
 
 const nintendoCollector = new NintendoCollector({
@@ -48,192 +60,94 @@ app.use(cors({
   methods: ['GET', 'POST', 'OPTIONS']
 }));
 app.use(express.json({ limit: '32kb' }));
+app.use((_request, response, next) => {
+  const sendJson = response.json.bind(response);
+  response.json = payload => sendJson(titleTranslator.decorate(payload));
+  next();
+});
 
 app.post('/api/settings', (request, response) => {
-  const next = Number(request.body?.refreshMinutes);
-  if (![5, 15, 30, 60].includes(next)) {
-    return response.status(400).json({ ok: false, error: 'refreshMinutes 只能是 5、15、30 或 60' });
-  }
-  refreshMinutes = next;
-  for (const collector of [nintendoCollector, ps5Collector, ps5JpCollector, steamCollector, steamGlobalCollector]) {
-    collector.refreshMinutes = next;
-  }
-  scheduleRefresh();
-  return response.json({ ok: true, refreshMinutes });
+  return response.status(403).json({ ok: false, error: '刷新周期固定为60分钟' });
 });
 
 app.get('/health', (_request, response) => {
   const platforms = Object.fromEntries(Object.keys(PLATFORM_CONFIG).map((platform) => {
     const data = nintendoCollector.get(platform);
-    return [platform, { count: data?.count || 0, updatedAt: data?.updatedAt || null, stale: data?.stale ?? true }];
+    return [platform, backgroundRefresh.status('nintendo', data)];
   }));
   const ps5Data = ps5Collector.get();
-  platforms.ps5 = { count: ps5Data?.count || 0, updatedAt: ps5Data?.updatedAt || null, stale: ps5Data?.stale ?? true };
+  platforms.ps5 = backgroundRefresh.status('ps5', ps5Data);
   const ps5JpData = ps5JpCollector.get();
-  platforms.ps5_jp = { count: ps5JpData?.count || 0, updatedAt: ps5JpData?.updatedAt || null, stale: ps5JpData?.stale ?? true };
+  platforms.ps5_jp = backgroundRefresh.status('ps5-jp', ps5JpData);
   const steamData = steamCollector.get();
-  platforms.steam = { count: steamData?.count || 0, updatedAt: steamData?.updatedAt || null, stale: steamData?.stale ?? true };
+  platforms.steam = backgroundRefresh.status('steam', steamData);
   const steamGlobalData = steamGlobalCollector.get();
-  platforms.steam_global = { count: steamGlobalData?.count || 0, updatedAt: steamGlobalData?.updatedAt || null, stale: steamGlobalData?.stale ?? true };
+  platforms.steam_global = backgroundRefresh.status('steam-global', steamGlobalData);
 
-  response.json({ ok: true, service: 'game-pulse-nintendo-collector', refreshMinutes, platforms });
+  response.set('Cache-Control', 'no-store');
+  response.json({ ok: true, service: 'game-pulse-nintendo-collector', refreshMinutes,
+    serverTime: new Date().toISOString(), nextRefreshAt,
+    refreshInProgress: backgroundRefresh.tasks.size > 0, platforms });
 });
 
 // Nintendo API
-app.get('/api/nintendo/rankings', async (request, response) => {
-  const platform = request.query.platform || 'switch1';
-  if (!PLATFORM_CONFIG[platform]) {
-    return response.status(400).json({ ok: false, error: 'platform 只能是 switch1、switch2、switch1_hk 或 switch2_hk' });
-  }
+app.get('/api/nintendo/image', async (request, response) => {
+  let url;
+  try { url = nintendoImageUrl(request.query.url); }
+  catch { return response.status(400).json({ ok: false, error: '无效的任天堂封面地址' }); }
   try {
-    if (request.query.refresh === '1' || !nintendoCollector.get(platform)) {
-      await nintendoCollector.refreshAll({ force: request.query.refresh === '1' });
+    const body = await nintendoCovers.get(url);
+    response.set('Cache-Control', 'public, max-age=86400');
+    return response.type('jpeg').send(body);
+  } catch {
+    return response.status(502).json({ ok: false, error: '官方封面暂时不可用' });
+  }
+});
+// 浏览器仅读取已发布缓存；请求更新也在后台进行，并限制为每小时一次。
+const rankingSources = [
+  ['nintendo', nintendoCollector, 'refreshAll', request => nintendoCollector.get(request.query.platform || 'switch1')],
+  ['ps5', ps5Collector, 'refresh', () => ps5Collector.get()],
+  ['ps5-jp', ps5JpCollector, 'refresh', () => ps5JpCollector.get()],
+  ['steam', steamCollector, 'refresh', () => steamCollector.get()],
+  ['steam-global', steamGlobalCollector, 'refresh', () => steamGlobalCollector.get()]
+];
+for (const [key, collector, method, get] of rankingSources) {
+  app.get('/api/' + key + '/rankings', (request, response) => {
+    if (key === 'nintendo' && !PLATFORM_CONFIG[request.query.platform || 'switch1']) {
+      return response.status(400).json({ ok: false, error: '无效的任天堂平台' });
     }
-    const data = nintendoCollector.get(platform);
+    const data = get(request);
+    if (!data) backgroundRefresh.start(key, () => collector[method]());
+    if (!data) return response.status(503).json({ ok: false, pending: true, error: '后台正在准备数据' });
     response.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=900');
-    return response.json({ ok: true, ...data });
-  } catch (error) {
-    const fallback = nintendoCollector.get(platform);
-    if (fallback) return response.status(206).json({ ok: true, ...fallback, stale: true, lastError: error.message });
-    return response.status(503).json({ ok: false, error: error.message });
-  }
-});
+    return response.json({ ok: true, ...data, ...backgroundRefresh.status(key, data) });
+  });
+  app.post('/api/' + key + '/refresh', (_request, response) => {
+    const queued = !get(_request) && backgroundRefresh.start(key, () => collector[method]());
+    response.status(202).json({ ok: true, queued: Boolean(queued), cached: true, nextRefreshAt });
+  });
+}
 
-app.post('/api/nintendo/refresh', async (_request, response) => {
-  try {
-    const result = await nintendoCollector.refreshAll({ force: true });
-    response.json({
-      ok: true,
-      platforms: Object.fromEntries(Object.entries(result).map(([key, value]) => [key, {
-        count: value.count,
-        updatedAt: value.updatedAt,
-        stale: value.stale
-      }]))
-    });
-  } catch (error) {
-    response.status(503).json({ ok: false, error: error.message });
-  }
+app.get('/api/prices/history', async (request, response) => {
+  const keys=Array.isArray(request.query.key)?request.query.key:request.query.key?[request.query.key]:[];
+  const since=request.query.since?Date.parse(request.query.since):null;
+  const after=request.query.after?Date.parse(request.query.after):null;
+  if(keys.length>100||keys.some(key=>typeof key!=='string'||key.length>500)||(since!==null&&!Number.isFinite(since))||(after!==null&&(!Number.isFinite(after)||keys.length!==1)))
+    return response.status(400).json({ok:false,error:'历史查询参数无效'});
+  response.set('Cache-Control', 'no-store');
+  const histories=priceHistory.query({keys,since,after,limit:keys.length?1000:4000});
+  response.json({ok:true,histories,continuations:keys.length?priceHistory.continuations(histories):{}});
 });
-
-// PS5 API
-app.get('/api/ps5/rankings', async (request, response) => {
-  try {
-    if (request.query.refresh === '1' || !ps5Collector.get()) {
-      await ps5Collector.refresh({ force: request.query.refresh === '1' });
-    }
-    const data = ps5Collector.get();
-    response.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=900');
-    return response.json({ ok: true, ...data });
-  } catch (error) {
-    const fallback = ps5Collector.get();
-    if (fallback) return response.status(206).json({ ok: true, ...fallback, stale: true, lastError: error.message });
-    return response.status(503).json({ ok: false, error: error.message });
-  }
+app.get('/api/translations', (_request, response) => {
+  const titles = {};
+  titleTranslator.visit(translationPayload(), game => {
+    const cn = titleTranslator.decorate({ name: game.name, price: 0 }).cn;
+    if (cn && cn !== game.name) titles[game.name] = cn;
+  });
+  response.set('Cache-Control', 'no-store');
+  response.json({ ok: true, titles, pending: Boolean(titleTranslator.running) });
 });
-
-app.post('/api/ps5/refresh', async (_request, response) => {
-  try {
-    const result = await ps5Collector.refresh({ force: true });
-    response.json({
-      ok: true,
-      platform: 'ps5',
-      count: result.count,
-      updatedAt: result.updatedAt,
-      stale: result.stale
-    });
-  } catch (error) {
-    response.status(503).json({ ok: false, error: error.message });
-  }
-});
-
-// PS5 JP API
-app.get('/api/ps5-jp/rankings', async (request, response) => {
-  try {
-    if (request.query.refresh === '1' || !ps5JpCollector.get()) {
-      await ps5JpCollector.refresh({ force: request.query.refresh === '1' });
-    }
-    const data = ps5JpCollector.get();
-    response.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=900');
-    return response.json({ ok: true, ...data });
-  } catch (error) {
-    const fallback = ps5JpCollector.get();
-    if (fallback) return response.status(206).json({ ok: true, ...fallback, stale: true, lastError: error.message });
-    return response.status(503).json({ ok: false, error: error.message });
-  }
-});
-
-app.post('/api/ps5-jp/refresh', async (_request, response) => {
-  try {
-    const result = await ps5JpCollector.refresh({ force: true });
-    response.json({
-      ok: true,
-      platform: 'ps5_jp',
-      count: result.count,
-      updatedAt: result.updatedAt,
-      stale: result.stale
-    });
-  } catch (error) {
-    response.status(503).json({ ok: false, error: error.message });
-  }
-});
-
-// Steam API
-app.get('/api/steam/rankings', async (request, response) => {
-  try {
-    if (request.query.refresh === '1' || !steamCollector.get()) {
-      await steamCollector.refresh({ force: request.query.refresh === '1' });
-    }
-    const data = steamCollector.get();
-    response.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=900');
-    return response.json({ ok: true, ...data });
-  } catch (error) {
-    const fallback = steamCollector.get();
-    if (fallback) return response.status(206).json({ ok: true, ...fallback, stale: true, lastError: error.message });
-    return response.status(503).json({ ok: false, error: error.message });
-  }
-});
-
-app.post('/api/steam/refresh', async (_request, response) => {
-  try {
-    const result = await steamCollector.refresh({ force: true });
-    response.json({
-      ok: true,
-      platform: 'steam',
-      count: result.count,
-      updatedAt: result.updatedAt,
-      stale: result.stale
-    });
-  } catch (error) {
-    response.status(503).json({ ok: false, error: error.message });
-  }
-});
-
-app.get('/api/steam-global/rankings', async (request, response) => {
-  try {
-    if (request.query.refresh === '1' || !steamGlobalCollector.get()) {
-      await steamGlobalCollector.refresh({ force: request.query.refresh === '1' });
-    }
-    const data = steamGlobalCollector.get();
-    response.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=900');
-    return response.json({ ok: true, ...data });
-  } catch (error) {
-    const fallback = steamGlobalCollector.get();
-    if (fallback) return response.status(206).json({ ok: true, ...fallback, stale: true, lastError: error.message });
-    return response.status(503).json({ ok: false, error: error.message });
-  }
-});
-
-app.post('/api/steam-global/refresh', async (_request, response) => {
-  try {
-    const result = await steamGlobalCollector.refresh({ force: true });
-    response.json({ ok: true, platform: 'steam_global', count: result.count, updatedAt: result.updatedAt, stale: result.stale });
-  } catch (error) {
-    response.status(503).json({ ok: false, error: error.message });
-  }
-});
-
 app.use('/api', (_request, response) => response.status(404).json({ ok: false, error: '接口不存在' }));
-app.use('/assets/nintendo-hk', express.static(HK_IMAGE_DIR));
 
 if (process.env.SERVE_FRONTEND !== '0') {
   const frontend = path.resolve(collectorRoot, '..', 'dist');
@@ -242,22 +156,45 @@ if (process.env.SERVE_FRONTEND !== '0') {
 }
 
 await Promise.all([nintendoCollector.init(), ps5Collector.init(), ps5JpCollector.init(), steamCollector.init(), steamGlobalCollector.init()]);
+function capturePriceHistory() {
+  return priceHistory.capture({
+    ...Object.fromEntries(Object.keys(PLATFORM_CONFIG).map(key => [key, nintendoCollector.get(key)])),
+    ps5_hk: ps5Collector.get(), ps5_jp: ps5JpCollector.get(),
+    steam: steamCollector.get(), steam_global: steamGlobalCollector.get()
+  });
+}
+await capturePriceHistory();
+function translationPayload() {
+  return [Object.keys(PLATFORM_CONFIG).map(key => nintendoCollector.get(key)), ps5Collector.get(), ps5JpCollector.get(), steamCollector.get(), steamGlobalCollector.get()];
+}
+titleTranslator.refresh(translationPayload);
+for (const [collector, method] of [[nintendoCollector, 'refreshAll'], [ps5Collector, 'refresh'], [ps5JpCollector, 'refresh'], [steamCollector, 'refresh'], [steamGlobalCollector, 'refresh']]) {
+  const refresh = collector[method].bind(collector);
+  collector[method] = async (...args) => {
+    const result = await refresh(...args);
+    await capturePriceHistory();
+    titleTranslator.refresh(translationPayload);
+    return result;
+  };
+}
+setInterval(capturePriceHistory, 60_000).unref();
 
 const server = app.listen(port, host, () => console.log(`Game Pulse collector listening on http://${host}:${server.address().port}`));
 
-// 首次采集
+// 已有缓存直接展示并等待整点；只有首次没有数据时立即在后台准备。
 if (process.env.COLLECT_ON_START !== '0') {
-  nintendoCollector.refreshAll().catch((error) => console.error('任天堂首次采集失败，将使用缓存：', error.message));
-  ps5Collector.refresh().catch((error) => console.error('PS5 港服首次采集失败，将使用缓存：', error.message));
-  ps5JpCollector.refresh().catch((error) => console.error('PS5 日服首次采集失败，将使用缓存：', error.message));
-  steamCollector.refresh().catch((error) => console.error('Steam 首次采集失败，将使用缓存：', error.message));
-  steamGlobalCollector.refresh().catch((error) => console.error('Steam 全球榜首次采集失败，将使用缓存：', error.message));
+  for (const [key, collector, method, get] of rankingSources) {
+    const hasCache = key === 'nintendo'
+      ? Object.keys(PLATFORM_CONFIG).every(platform => collector.get(platform))
+      : get({ query: {} });
+    if (!hasCache) backgroundRefresh.start(key, () => collector[method]());
+  }
 }
 
 for (const signal of ['SIGTERM', 'SIGINT']) {
   process.on(signal, () => {
     clearTimeout(refreshTimer);
-    server.close(() => process.exit(0));
+    server.close(() => priceHistory.pending.finally(()=>{priceHistory.close();process.exit(0);}));
     setTimeout(() => process.exit(0), 10_000).unref();
   });
 }
@@ -271,23 +208,18 @@ process.on('unhandledRejection', (reason) => {
   console.error('Unhandled Rejection:', reason);
 });
 
-// 每批完成后安排下一次检查，设置变化时立即重新计时。
+// 按时钟整点启动，不随启动时间、缓存时间或采集耗时漂移。
 function scheduleRefresh() {
   clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(async () => {
-    console.log(`[${new Date().toLocaleTimeString()}] 检查数据缓存（有效期 ${refreshMinutes} 分钟）...`);
-    const tasks = [
-      ['任天堂', nintendoCollector.refreshAll()],
-      ['PS5 港服', ps5Collector.refresh()],
-      ['PS5 日服', ps5JpCollector.refresh()],
-      ['Steam', steamCollector.refresh()],
-      ['Steam 全球榜', steamGlobalCollector.refresh()]
-    ];
-    const results = await Promise.allSettled(tasks.map(([, task]) => task));
-    results.forEach((result, index) => {
-      if (result.status === 'rejected') console.error(`${tasks[index][0]}定时采集失败：`, result.reason);
-    });
+  const now = Date.now();
+  const deadline = nextHourlyRefresh(now);
+  nextRefreshAt = new Date(deadline).toISOString();
+  refreshTimer = setTimeout(() => {
     scheduleRefresh();
-  }, refreshMinutes * 60 * 1000);
+    console.log(`[${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}] 整点后台采集...`);
+    for (const [key, collector, method] of rankingSources) {
+      backgroundRefresh.start(key, () => collector[method]({ force: true }), { scheduled: true });
+    }
+  }, deadline - now);
 }
 scheduleRefresh();
