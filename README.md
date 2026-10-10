@@ -112,7 +112,7 @@ docker compose up -d --build --wait
 
 如果设置了自定义 `DATA_DIR`，备份和恢复实际数据目录，并确保新服务器的 `.env` 指向该目录。迁移 B 后，在 A 的 `.env` 更新 `COLLECTOR_UPSTREAM` 并重新启动网站。纯网站服务器只需迁移 `.env`，不需要收集器数据目录。
 
-将本地 Windows 的已有采集数据迁移到服务器时，先运行 `Stop-GamePulse.cmd`，将 `collector/data/` 中的 JSON 文件放入服务器 `deploy/data/`，再启动服务器。浏览器收藏、设置和价格记录使用 localStorage，属于各浏览器的本地数据，不在服务器备份中。
+迁移旧采集数据时，先停止旧收集器，将原数据目录中的 JSON 文件放入服务器 `deploy/data/`，再启动服务器。浏览器收藏、设置和价格记录使用 localStorage，属于各浏览器的本地数据，不在服务器备份中。
 
 ## 更新、日志与停止
 
@@ -136,9 +136,19 @@ docker compose -f compose.collector.yaml logs -f --tail=100
 
 网站 `/health` 返回 502：检查 A 到 B 的网络、B 的监听地址、安全组，以及 `COLLECTOR_UPSTREAM`。接口正常但 `count=0`：查看收集器日志和官方站点连通性。配置只提供运行状态检查，不保证第三方网站一定能成功采集。
 
-## 本地运行与手动部署
+## 当前更新流程
 
-Windows 双击 `Start-GamePulse.cmd`，停止时运行 `Stop-GamePulse.cmd`。临时 Cloudflare 地址会随重启改变，电脑关机后不可访问。
+生产项目运行在服务器上，本机用于修改和验证代码。验证通过后提交并推送：
+
+```bash
+git add -A
+git commit -m "说明本次修改"
+git push github main
+```
+
+推送触发 GitHub Actions 的 `Deploy production server`，服务器 runner 安装依赖、测试并更新 Docker 服务，沿用服务器原有环境配置和数据库。部署结果见 GitHub Actions，详细说明见 [自动部署文档](deploy/GITHUB-AUTO-DEPLOY.md)。本机不需要启动网站、Docker 或 Cloudflare Tunnel。
+
+## 手动部署
 
 不使用 Docker 时，可在安装 Node.js 22+ 的服务器运行整站：
 
