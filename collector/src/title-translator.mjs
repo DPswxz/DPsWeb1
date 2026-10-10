@@ -1,12 +1,14 @@
 import { DatabaseSync } from 'node:sqlite';
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import {simplifiedDisplay} from './chinese-display.mjs';
 
 const normalizedTitle = title => title
   .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
   .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
   .replace(/&amp;/g, '&').replace(/&apos;/g, "'").replace(/&quot;/g, '"')
   .replace(/[™®]/g, '').normalize('NFKC').replace(/[’‘]/g, "'")
+  .replace(/\s*[(（][^()（）]*(?:中文|英语|英語|英文|日语|日語|日文|韓文|韩语|韓語)[^()（）]*[)）]\s*$/g,'')
   .replace(/\s*:\s*/g, ': ').replace(/\s+/g, ' ').trim();
 export const titleKey = title => normalizedTitle(title).toLowerCase();
 const needsTranslation = title => /(?:\p{Script=Hiragana}|\p{Script=Katakana})/u.test(title) || (/[a-z]/i.test(title) && !/\p{Script=Han}/u.test(title));
@@ -36,6 +38,8 @@ export class TitleTranslator {
     this.reserve = this.db.prepare("INSERT OR IGNORE INTO titles VALUES(?,NULL,'attempted',?)");
     this.finish = this.db.prepare('UPDATE titles SET translated=?,status=? WHERE name=?');
     const known = JSON.parse(await readFile(new URL('./title-overrides.json', import.meta.url), 'utf8'));
+    try{this.productNames=JSON.parse(await readFile(new URL('./title-product-overrides.json',import.meta.url),'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;this.productNames={};}
+    this.reviewed = new Set(Object.keys(known).map(titleKey));
     this.db.exec('BEGIN IMMEDIATE');
     try {
       for (const [name, translated] of Object.entries(known)) this.seed.run(titleKey(name), translated);
@@ -44,16 +48,26 @@ export class TitleTranslator {
   }
   visit(value, action) {
     if (!value || typeof value !== 'object') return;
-    if (typeof value.name === 'string' && typeof value.price === 'number') action(value);
+    if (typeof value.name === 'string' && ('price' in value || 'id' in value)) action(value);
     for (const child of Object.values(value)) if (child && typeof child === 'object') this.visit(child, action);
+  }
+  productName(game){
+    if(!game.id)return null;
+    const platform=game.historyPlatform||'',url=game.url||'';
+    const family=platform.startsWith('steam')||game.platform==='PC'||url.includes('store.steampowered.com')?'steam':
+      platform==='ps5_jp'||url.includes('store.playstation.com/ja-jp/')?'ps5_jp':
+      platform==='ps5_hk'||url.includes('store.playstation.com/zh-')?'ps5_hk':'';
+    return family?this.productNames[`${family}:${game.id}`]:null;
   }
   decorate(payload) {
     // 返回新对象，防止机器译名覆盖收集器的官方名称和缓存。
     const result = structuredClone(payload);
     this.visit(result, game => {
+      const product=this.productName(game);if(product){game.cn=product;return;}
       const entry = this.lookup.get(titleKey(game.name));
       const official = game.cn && game.cn !== game.name && /\p{Script=Han}/u.test(game.cn) && !/(?:\p{Script=Hiragana}|\p{Script=Katakana})/u.test(game.cn);
-      game.cn = (entry?.status === 'known' && entry.translated) || (official && game.cn) || entry?.translated || game.cn || game.name;
+      const preferred=entry?.status==='known'&&entry.translated;
+      game.cn = (preferred&&(this.reviewed.has(titleKey(game.name))?preferred:simplifiedDisplay(preferred))) || simplifiedDisplay((official && game.cn) || entry?.translated || game.cn || game.name);
     });
     return result;
   }
@@ -62,7 +76,8 @@ export class TitleTranslator {
     const names = new Map();
     this.visit(payload, game => {
       const key = titleKey(game.name);
-      if (this.lookup.get(key)?.status !== 'known' && game.cn && game.cn !== game.name && /\p{Script=Han}/u.test(game.cn) && !/(?:\p{Script=Hiragana}|\p{Script=Katakana})/u.test(game.cn)) this.seed.run(key, game.cn);
+      const product=this.productName(game);if(product){if(this.lookup.get(key)?.status!=='known')this.seed.run(key,product);return;}
+      if (this.lookup.get(key)?.status !== 'known' && game.cn && game.cn !== game.name && /\p{Script=Han}/u.test(game.cn) && !/(?:\p{Script=Hiragana}|\p{Script=Katakana})/u.test(game.cn)) this.seed.run(key, simplifiedDisplay(game.cn));
       if (key && key.length <= 500 && needsTranslation(key) && !this.lookup.get(key) && !names.has(key)) names.set(key, normalizedTitle(game.name));
     });
     return [...names.values()];

@@ -10,7 +10,7 @@ export function nintendoImageUrl(value) {
 }
 
 export class NintendoCoverProxy {
-  constructor(){this.cache=new Map();this.pending=new Map();this.active=0;this.waiting=[];}
+  constructor({browserType=chromium,requestFactory=request}={}){this.browserType=browserType;this.requestFactory=requestFactory;this.cache=new Map();this.pending=new Map();this.active=0;this.waiting=[];}
   prime(storageState,userAgent){this.storageState=storageState;this.userAgent=userAgent;}
   async context(){
     if(!this.contextPromise)this.contextPromise=this.prepare().catch(error=>{this.contextPromise=null;throw error;});
@@ -18,16 +18,17 @@ export class NintendoCoverProxy {
   }
   async prepare(){
     if(!this.storageState){
-      const browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+      const browser=await this.browserType.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
       try{
         const page=await browser.newPage();
         await page.route('**/*',route=>['image','font','media'].includes(route.request().resourceType())?route.abort():route.continue());
-        await page.goto('https://store.nintendo.com.hk/digital-games/charts?platform=switch',{waitUntil:'domcontentloaded',timeout:60000});
-        await page.locator('.product-item-info').first().waitFor({timeout:60000});
+        // 封面只需要公共商店会话，不依赖排行榜加载或商品是否仍在榜。
+        await page.goto('https://store.nintendo.com.hk/',{waitUntil:'domcontentloaded',timeout:15000});
+        await page.waitForFunction(()=>Boolean(document.querySelector('.page-wrapper'))&&document.cookie.includes('aws-waf-token'),null,{timeout:15000});
         this.prime(await page.context().storageState(),await page.evaluate(()=>navigator.userAgent));
       }finally{await browser.close();}
     }
-    return request.newContext({storageState:this.storageState,userAgent:this.userAgent,timeout:20000});
+    return this.requestFactory.newContext({storageState:this.storageState,userAgent:this.userAgent,timeout:15000});
   }
   async get(value){
     const url=nintendoImageUrl(value),cached=this.cache.get(url);

@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { titleKey } from '../collector/src/title-translator.mjs';
+import { simplifiedDisplay } from '../collector/src/chinese-display.mjs';
 
 const root = new URL('../', import.meta.url);
 const read = file => fs.readFileSync(new URL(file, root), 'utf8');
@@ -40,6 +41,20 @@ function visit(value, platform) {
   for (const child of Object.values(value)) if (child && typeof child === 'object') visit(child, platform);
 }
 for (const [platform, payload] of Object.entries(payloads)) visit(payload, platform);
+// 退榜商品也参与核对，不能只检查本轮榜单。
+const archive=new DatabaseSync(new URL('deploy/data/price-history.sqlite',root).pathname.replace(/^\/([A-Za-z]:)/,'$1'),{readOnly:true});
+for(const row of archive.prepare("SELECT platform,data FROM game_catalog WHERE COALESCE(json_extract(data,'$.metadataMissing'),0)=0").all()){
+ const group=row.platform.startsWith('switch')?'nintendo':row.platform==='ps5_hk'?'ps5':row.platform==='ps5_jp'?'ps5-jp':row.platform==='steam_global'?'steam-global':'steam';
+ visit({...JSON.parse(row.data),price:0},group);
+}
+archive.close();
+let localized=[];try{localized=JSON.parse(read('collector/title-official-localizations.json'));}catch{}
+const officialByName=new Map(),officialSteamById=new Map(localized.filter(r=>r.region==='steam').map(r=>[String(r.id),r]));
+for(const game of products){
+ const row=game.platformSource.startsWith('steam')?officialSteamById.get(String(game.id)):
+ localized.find(r=>r.region==='ps5_hk'&&r.id===game.id);
+ if(row)officialByName.set(game.name,{cn:clean(row.name),method:'同一商品ID官方简体中文页面核对',source:row.source});
+}
 
 const officialSteam = new Map(products.filter(g => g.platformSource === 'steam' && chinese(g.name)).map(g => [String(g.id), g]));
 const officialPS = new Map();
@@ -83,9 +98,17 @@ function resolveManual(name) {
   const normalized = key(name);
   const exact = manual.get(normalized);
   if (exact && exact.method !== '既有人工名称映射') return exact;
+  // 平台标记不是另一部作品；同一基础名的特殊版本保留原后缀，不能猜译或丢失。
+  const withoutPlatform=clean(name).replace(/\s*\(?PS[45](?:\s*[&＆]\s*PS[45])?\)?$/i,'').trim();
+  const platformBase=manual.get(key(withoutPlatform));
+  if(platformBase&&platformBase.method!=='既有人工名称映射')return {...platformBase,method:`${platformBase.method}；保留平台信息`,cn:`${platformBase.cn}${clean(name).slice(withoutPlatform.length)}`};
   for (const [base, value] of [...manual].sort((a, b) => b[0].length - a[0].length)) {
     if (!normalized.startsWith(base) || (exact && value.method === '既有人工名称映射')) continue;
     let suffix = clean(name).slice(clean(value.name).length).trim().replace(/^\s*[-–:]\s*/, '');
+    if(value.method!=='既有人工名称映射'&&suffix&&/^(?:Z Version\b|デジタル|デラックス|アルティメット|体験版|序盤体験版|～プロローグ体験版|アトラスブランド35th|Season\d+\b|MASTER COLLECTION|\(MASTER COLLECTION|Original Soundtrack\b|Mini Soundtrack\b|予約限定Extra Soundtrack|コレクターズ|コンプリートパック|スターターパック|PS5アップグレード版|フリートライアル)/i.test(suffix)){
+      for(const [pattern,replacement] of suffixMap)suffix=suffix.replace(pattern,replacement);
+      return {...value,cn:`${value.cn} ${suffix}`,method:`${value.method}；保留已辨认版本原文`};
+    }
     if (!suffix || !/^(?:Nintendo Switch 2 Edition|Digital Deluxe Edition|Deluxe Edition|Premium Plus Edition|Premium Deluxe Edition|Premium Edition|Ultimate Edition|Standard Edition|Complete Edition|Gold Edition|Gourmet Edition|Royal Edition|Anniversary Edition|Game Of The Year Edition|GOTY Edition|Year 1 Deluxe Edition|Free Trial|DEMO VERSION|Demo|Trial|Digital Deluxe|デジタルデラックスエディション|デジタルデラックス版|デラックスエディション|マスターズ版)(?:\s*\(?PS4\s*[&＆]\s*PS5\)?)?$|^\(?PS4\s*[&＆]\s*PS5\)?$/i.test(suffix)) continue;
     for (const [pattern, replacement] of suffixMap) suffix = suffix.replace(pattern, replacement);
     return { ...value, cn: `${value.cn} ${suffix}`.trim(), method: `${value.method}；保留版本后缀` };
@@ -97,18 +120,21 @@ const output = Object.fromEntries(Object.entries(previous).map(([name, cn]) => [
 for (const rule of rules) for (const name of rule.aliases) output[name] = rule.cn;
 for (const [name, row] of all) {
   let result = resolveManual(name);
+  if(!result||result.method==='既有人工名称映射')result=officialByName.get(name)||result;
   if (!result) {
     const related = products.filter(g => g.name === name);
     const steam = related.find(g => g.platformSource.startsWith('steam') && officialSteam.has(String(g.id)));
     const ps = !chinese(name) && !edition.test(clean(name)) && related.find(g => /^ps5/.test(g.platformSource) && officialPS.has(String(g.conceptId || g.id)));  
     if (steam) { const g = officialSteam.get(String(steam.id)); result = { cn: clean(g.name), method: 'Steam同一商品ID官方中文名', source: g.url }; }
     else if (ps) { const r = officialPS.get(String(ps.conceptId || ps.id)); result = { cn: r.text, method: 'PS同一概念ID官方中文名', source: r.game.url }; }
-    else if (chinese(name)) result = { cn: clean(name), method: '保留官方中文商品名称', source: row.sources[0] };
+    else if (chinese(name)&&related.some(g=>g.platformSource!=='ps5-jp'&&!(g.platformSource==='nintendo'&&g.url?.includes('store-jp.nintendo.com')))) result = { cn: clean(name), method: '保留官方中文商品名称', source: row.sources[0] };
     else {
       result = { cn: clean(name), method: '未确认中文名，保留原名', source: row.sources[0] };
       if (row.before !== name) unresolved.push({ name, before: row.before, sources: row.sources });
     }
   }
+  // 明确人工规则（包括用户指定的专名）优先，其余中文统一简体字形。
+  if(!/未确认.*中文名/.test(result.method)&&!rules.some(rule=>rule.aliases.some(alias=>key(alias)===key(name))))result.cn=simplifiedDisplay(result.cn);
   row.after = result.cn;
   row.method = result.method;
   row.evidence = result.source || row.sources[0] || '';
@@ -118,7 +144,13 @@ write('collector/title-review-originals.json', JSON.stringify([...all.values()].
 const escape = value => `"${String(value).replace(/"/g, '""')}"`;
 write('collector/title-audit.csv', '\uFEFF' + ['名称,旧显示,核对后显示,核对方式,依据,平台', ...[...all.values()].map(r => [r.name, r.before, r.after, r.method, r.evidence, r.platforms.join(' / ')].map(escape).join(','))].join('\n') + '\n');
 write('collector/src/title-overrides.json', JSON.stringify(output, null, 2) + '\n');
-const proxyStart = source.indexOf('}, {\n  normalize(title)');
+const productNames={};
+for(const row of localized){
+ const preferred=output[row.original]||output[row.name]||resolveManual(row.name)?.cn||simplifiedDisplay(clean(row.name));
+ productNames[`${row.region}:${row.id}`]=preferred;
+}
+write('collector/src/title-product-overrides.json',JSON.stringify(productNames,null,2)+'\n');
+const proxyStart = source.search(/}, \{\r?\n  normalize\(title\)/);
 if (proxyStart < 0) throw new Error('Cannot locate frontend title dictionary');
 write('dist/app.js', 'const chineseTitleMap = new Proxy(' + JSON.stringify(output, null, 2) + source.slice(proxyStart + 1));
 const counts = {};

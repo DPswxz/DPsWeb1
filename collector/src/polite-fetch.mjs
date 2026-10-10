@@ -27,7 +27,12 @@ export function createPoliteFetch({ gapMs = 2000, fetchImpl = (...args) => fetch
       await ready;
       const entry = state[key] ||= { nextAt: 0, until: 0, failures: 0 };
       options.signal?.throwIfAborted();
-      if (entry.until > now()) throw new Error(`商店请求暂停至 ${new Date(entry.until).toISOString()}，继续使用缓存`);
+      if (entry.until > now()) {
+        if(entry.failures>0)throw new Error(`商店请求暂停至 ${new Date(entry.until).toISOString()}，继续使用缓存`);
+        // A short network timeout pauses the queue; it must not fail every later SKU.
+        await sleep(entry.until-now(),undefined,{signal:options.signal});
+        options.signal?.throwIfAborted();
+      }
       const wait = Math.max(0, entry.nextAt - now());
       if (wait) await sleep(wait, undefined, { signal: options.signal });
       const timeoutSignal = AbortSignal.timeout(15000);
@@ -62,7 +67,14 @@ export function createPoliteFetch({ gapMs = 2000, fetchImpl = (...args) => fetch
       }
     });
     queues.set(key, task);
-    return task;
+    if (!options.signal) return task;
+    // 总采集超时不应等到前面的另一地区请求结束才生效。
+    return new Promise((resolve, reject) => {
+      const abort = () => reject(options.signal.reason);
+      options.signal.addEventListener('abort', abort, { once: true });
+      if (options.signal.aborted) abort();
+      task.then(resolve, reject).finally(() => options.signal.removeEventListener('abort', abort));
+    });
   };
 }
 

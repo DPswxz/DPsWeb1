@@ -10,8 +10,10 @@ const upstream = `http://127.0.0.1:${webPort}`;
 app.use(['/api', '/health'], async (request, response) => {
   if (request.method !== 'GET') return response.status(405).json({ ok: false, error: '仅允许读取接口' });
   try {
-    const result = await fetch(`${upstream}${request.originalUrl}`, { signal: AbortSignal.timeout(120000) });
-    for (const name of ['content-type', 'cache-control']) if (result.headers.has(name)) response.set(name, result.headers.get(name));
+    const result = await fetch(`${upstream}${request.originalUrl}`, {
+      headers: request.headers['if-none-match'] ? {'If-None-Match':request.headers['if-none-match']} : {},
+      signal: AbortSignal.timeout(120000) });
+    for (const name of ['content-type', 'cache-control', 'etag']) if (result.headers.has(name)) response.set(name, result.headers.get(name));
     response.status(result.status).send(Buffer.from(await result.arrayBuffer()));
   } catch { response.status(502).json({ ok: false, error: 'Docker 收集器暂时不可用' }); }
 });

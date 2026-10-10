@@ -5,6 +5,20 @@ import test from 'node:test';
 const source = await readFile(new URL('../../dist/app.js', import.meta.url), 'utf8');
 const context = vm.createContext({});
 vm.runInContext(source.slice(source.indexOf('const dailyHistoryCache'), source.indexOf('function renderMiniSparklineSvg')) + '\nthis.build = buildPriceChartModel; this.path = priceChartPath; this.snap = snapPriceChartPoint;', context);
+
+test('退榜区间在缩略图和各范围详情中均为虚线，同价回榜恢复实线，悬停提示未观测价格',()=>{
+ const history=[{date:'2026-10-01T00:00:00+08:00',price:100}];
+ history.rankingGaps=[{from:'2026-10-03T00:00:00+08:00',to:'2026-10-05T00:00:00+08:00'}];
+ for(const months of [6,12,0]){
+  const model=context.build(history,Date.parse('2026-10-07T12:00:00+08:00'),months);
+  const mini=context.path(model,0,60,0,10),large=context.path(model,0,600,0,100);
+  assert.match(mini.dashed,/M 20 .* H 40/);assert.match(large.dashed,/M 200 .* H 400/);
+  assert.match(mini.solid,/M 40 .* H 60/);
+  assert.equal(context.snap(model,0.5).inGap,true);assert.equal(context.snap(model,1).inGap,false);
+ }
+ const open=[...history];open.rankingGaps=[{from:'2026-10-03T00:00:00+08:00',to:null}];
+ assert.equal(context.snap(context.build(open,Date.parse('2026-10-07T12:00:00+08:00')),1).inGap,true);
+});
 test('图表按北京时间每天保留最后价格，缩略图和详情使用相同阶梯位置', () => {
   const model = context.build([
     { date: '2026-10-01T08:00:00Z', price: 298 },

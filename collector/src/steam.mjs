@@ -16,6 +16,12 @@ function parsePrice(priceText) {
   return parseFloat(match[0].replace(/,/g, '')) || 0;
 }
 
+export function steamDiscount(row,price,old){
+  const explicit=row.match(/\bdata-discount=["'](\d+)["']/)?.[1]||row.match(/<div\b[^>]*class=["'][^"']*\bdiscount_pct\b[^"']*["'][^>]*>\s*-?(\d+)\s*%/i)?.[1];
+  if(explicit!==undefined)return Math.max(0,Math.min(100,Number(explicit)));
+  return old>price&&price>0?Math.round((1-price/old)*100):0;
+}
+
 export class SteamCollector {
   constructor({ cacheFile, refreshMinutes = 15 } = {}) {
     this.cacheFile = cacheFile || path.resolve('data/steam-cache.json');
@@ -28,6 +34,10 @@ export class SteamCollector {
     await mkdir(path.dirname(this.cacheFile), { recursive: true });
     try {
       this.cache = JSON.parse(await readFile(this.cacheFile, 'utf8'));
+      // 旧解析漏掉折扣属性时，使用已记录的原价/售价恢复，不伪造采集时间。
+      let repaired=false;
+      for(const game of this.cache.games||[]){if(!game.discount&&game.old>game.price&&game.price>0){game.discount=steamDiscount('',game.price,game.old);repaired=true;}}
+      if(repaired)await this.#save();
     } catch {
       this.cache = null;
     }
@@ -91,12 +101,7 @@ export class SteamCollector {
         const imgMatch = row.match(/<img[^>]+src="([^">]+)"/);
         const image = imgMatch ? imgMatch[1] : '';
 
-        const discountMatch = row.match(/<div class="discount_pct">([^<]+)<\/div>/);
         let discount = 0;
-        if (discountMatch) {
-          const dNum = parseInt(discountMatch[1].replace(/[^0-9]/g, ''), 10);
-          if (!isNaN(dNum)) discount = dNum;
-        }
 
         let price = 0;
         let oldPrice = null;
@@ -120,6 +125,7 @@ export class SteamCollector {
         if (price === 0 && !priceText.includes('¥')) {
           isFree = true;
         }
+        discount=steamDiscount(row,price,oldPrice);
 
         const rank = i + 1;
         const prevRank = previousRanks.get(appId);

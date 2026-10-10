@@ -67,10 +67,22 @@ for (const serveFrontend of ['0', '1']) {
     const queued = await fetch(`${base}/api/ps5/refresh`, { method: 'POST' });
     assert.equal(queued.status, 202);
     assert.equal((await queued.json()).cached, true);
+    const blockedForce = await fetch(`${base}/api/ps5/refresh`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '203.0.113.1' },
+      body: JSON.stringify({force:true})
+    });
+    assert.equal(blockedForce.status, 403, '公开代理请求不能强制触发抓取');
     const immediate = await fetch(`${base}/api/ps5/rankings?refresh=1`);
     assert.equal(immediate.status, 200);
     assert.equal((await immediate.json()).games[0].id, 'fixture');
     assert.equal(image.status, 400);
+    const badCover=await fetch(`${base}/api/covers/image?url=https://example.com/test.jpg`);
+    assert.equal(badCover.status,400);
+    const archive=await fetch(`${base}/api/games/archive`).then(r=>r.json());
+    assert.equal(archive.ok,true);assert.equal(archive.total,8);
+    const regionalArchive=await fetch(`${base}/api/games/archive?platform=ps5_hk&q=测试游戏`).then(r=>r.json());
+    assert.equal(regionalArchive.total,1);assert.equal(regionalArchive.games[0].name,'测试游戏');
+    assert.equal((await fetch(`${base}/api/games/archive?platform=invalid`)).status,400);
     const missingApi = await fetch(`${base}/api/does-not-exist`);
     assert.equal(missingApi.status, 404);
     assert.equal((await missingApi.json()).ok, false);

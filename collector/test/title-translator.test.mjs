@@ -6,6 +6,48 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { TitleTranslator, titleKey } from '../src/title-translator.mjs';
 
+test('龙之信条本体、黑暗觉者和角色编辑器分别核对，商品及历史档案不重复翻译',async()=>{
+ const directory=await mkdtemp(path.join(os.tmpdir(),'dragon-titles-'));
+ let calls=0;
+ const translator=new TitleTranslator(path.join(directory,'titles.sqlite'),{apiKey:'test',fetchImpl:()=>{calls++;throw Error('Must use reviewed names');}});
+ await translator.init();
+ try {
+  const cases=[
+   ["Dragon's Dogma 2",'龙之信条2'],
+   ["Dragon&#x27;s Dogma 2",'龙之信条2'],
+   ["Dragon’s Dogma 2: Dark Arisen",'龙之信条2：黑暗觉者'],
+   ["Dragon&#x27;s Dogma 2: Dark Arisen",'龙之信条2：黑暗觉者'],
+   ["Dragon's Dogma 2: Dark Arisen Expansion",'龙之信条2：黑暗觉者 扩展包'],
+   ["Dragon's Dogma 2 Character Creator & Storage",'龙之信条2 创建&保存角色'],
+   ['Returnal™','死亡回归'],
+   ['Sonic Racing: CrossWorlds','索尼克赛车 交叉世界']
+  ];
+  const games=cases.map(([name])=>({id:'unrelated',name,price:10,cn:'错误旧缓存'}));
+  assert.deepEqual(translator.decorate(games).map(g=>g.cn),cases.map(([,cn])=>cn));
+  assert.equal(translator.decorate({id:'2054970',platform:'PC',name:"Dragon's Dogma 2",price:100}).cn,'龙之信条2');
+  assert.equal(translator.decorate({id:'HP0102-PPSA18727_00-DD2DA00000000000',historyPlatform:'ps5_hk',name:"Dragon's Dogma 2: Dark Arisen",price:100}).cn,'龙之信条2：黑暗觉者');
+  await translator.refresh(()=>games);assert.equal(calls,0);
+ }finally{translator.close();await rm(directory,{recursive:true,force:true});}
+});
+
+test('跨区中文专名、语言后缀、未定价和档案商品统一名称，不重复调用翻译API',async()=>{
+ const dir=await mkdtemp(path.join(os.tmpdir(),'title-locales-'));
+ const translator=new TitleTranslator(path.join(dir,'titles.sqlite'),{apiKey:'test',fetchImpl:()=>{throw Error('No translation calls');}});await translator.init();
+ try{
+  const names=['柏德之門3','柏德之门3',"Baldur’s Gate 3",'柏德之門3 (簡體中文, 英文, 繁體中文, 日文)'];
+  const games=names.map(name=>({id:'sku',name,price:null,cn:'柏德之門3'}));
+  assert.deepEqual(translator.decorate(games).map(g=>g.cn),names.map(()=> '博德之门3'));
+  assert.equal(translator.decorate({id:'sku',name:'柏德之門3 - 數位豪華版'}).cn,'博德之门3 - 数字豪华版');
+  assert.equal(translator.decorate({id:'new',name:'未收录作品',cn:'未收錄作品',price:1}).cn,'未收录作品');
+  assert.equal(translator.decorate({name:'原文テスト',price:1}).cn,'原文テスト');
+  const alias={id:'1086940',platform:'PC',name:'Baldur localization changed',cn:'错误旧缓存',price:100};
+  assert.equal(translator.decorate(alias).cn,'博德之门3');
+  assert.deepEqual(translator.scan([alias]),[],'同一商品改变名称也不重复消耗翻译额度');
+  assert.equal(translator.decorate({...alias,id:'unrelated',name:'Completely different work'}).cn,'错误旧缓存','不同商品不能借用译名');
+  await translator.refresh(()=>games);assert.equal(translator.scan(games).length,0);
+ }finally{translator.close();await rm(dir,{recursive:true,force:true});}
+});
+
 test('联网人工核对名称覆盖旧机器缓存，全部已核对条目不消耗翻译API', async () => {
   const records = JSON.parse(await readFile(new URL('../title-web-review.json', import.meta.url), 'utf8'));
   const directory = await mkdtemp(path.join(os.tmpdir(), 'game-web-reviewed-'));
