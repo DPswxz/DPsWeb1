@@ -529,3 +529,5 @@ th.col-history[hidden], td.col-history[hidden] { display: none !important; }
 .archive-platform-tabs button[aria-selected="true"]{color:var(--mint);border-color:#31524b;background:#192b2a}
 .price-chart-tooltip{width:190px;text-align:center;contain:layout paint}
 @media(max-width:600px){.archive-platform-tabs{padding:0 12px 10px}.ambient{display:none}.topbar{backdrop-filter:none;background:#0a151b}}
+
+.site-credit{width:min(1440px,calc(100% - 48px));margin:0 auto;padding:20px 0 28px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px 24px;color:var(--muted);font-size:13px}.site-credit strong{color:var(--text);font-weight:600}.site-credit a{color:var(--mint);text-decoration:none;padding:6px 10px;border:1px solid var(--line);border-radius:8px}.site-credit a:hover{border-color:var(--mint);background:rgba(142,240,212,.06)}.site-credit a:focus-visible{outline:2px solid var(--mint);outline-offset:4px}
