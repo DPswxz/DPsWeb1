@@ -72,5 +72,6 @@ test('封面落盘后新代理实例复用图片，过期只发送条件请求',
   const first=new GameCoverProxy({cacheDir:dir,fetchImpl:async()=>{calls++;return new Response(image,{headers:{'content-type':'image/png',etag:'"origin"'}});}});const a=await first.get(url);
   const second=new GameCoverProxy({cacheDir:dir,fetchImpl:async()=>{throw Error('Restart must use disk cache');}});const b=await second.get(url);assert.deepEqual(b.body,a.body);assert.equal(calls,1);
   b.expires=0;const third=new GameCoverProxy({cacheDir:dir,fetchImpl:async(_url,options)=>{assert.equal(options.headers['If-None-Match'],'"origin"');return new Response(null,{status:304});}});await third.saveDisk(url,b);const c=await third.get(url);assert.deepEqual(c.body,a.body);
- }finally{await rm(dir,{recursive:true,force:true});}
+  while(third.checking.size)await new Promise(resolve=>setTimeout(resolve,5));
+ }finally{await rm(dir,{recursive:true,force:true,maxRetries:3});}
 });
