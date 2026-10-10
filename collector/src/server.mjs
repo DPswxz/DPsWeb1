@@ -1,11 +1,14 @@
 import cors from 'cors';
 import { PriceHistory } from './price-history.mjs';
+import { startArchiveMetadata } from './archive-metadata.mjs';
 import { TitleTranslator } from './title-translator.mjs';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readFile } from 'node:fs/promises';
 import { NintendoCollector, PLATFORM_CONFIG } from './nintendo.mjs';
 import { nintendoCovers, nintendoImageUrl } from './nintendo-cover.mjs';
+import { gameCovers, gameCoverUrl } from './game-cover.mjs';
 import { PlayStationCollector } from './ps5.mjs';
 import { PlayStationJpCollector } from './ps5-jp.mjs';
 import { SteamCollector } from './steam.mjs';
@@ -57,7 +60,7 @@ const steamGlobalCollector = new SteamGlobalCollector({
 app.disable('x-powered-by');
 app.use(cors({
   origin: allowedOrigins.includes('*') ? true : allowedOrigins,
-  methods: ['GET', 'POST', 'OPTIONS']
+  methods: ['GET', 'POST', 'OPTIONS'], exposedHeaders: ['ETag']
 }));
 app.use(express.json({ limit: '32kb' }));
 app.use((_request, response, next) => {
@@ -77,8 +80,10 @@ app.get('/health', (_request, response) => {
   }));
   const ps5Data = ps5Collector.get();
   platforms.ps5 = backgroundRefresh.status('ps5', ps5Data);
+  if (platforms.ps5.refreshState === 'refreshing') platforms.ps5.progress = ps5Collector.progress;
   const ps5JpData = ps5JpCollector.get();
   platforms.ps5_jp = backgroundRefresh.status('ps5-jp', ps5JpData);
+  if (platforms.ps5_jp.refreshState === 'refreshing') platforms.ps5_jp.progress = ps5JpCollector.progress;
   const steamData = steamCollector.get();
   platforms.steam = backgroundRefresh.status('steam', steamData);
   const steamGlobalData = steamGlobalCollector.get();
@@ -91,6 +96,17 @@ app.get('/health', (_request, response) => {
 });
 
 // Nintendo API
+app.get('/api/covers/image', async (request,response) => {
+  let url;
+  try { url=gameCoverUrl(request.query.url); }
+  catch { return response.status(400).json({ok:false,error:'无效的封面地址'}); }
+  try {
+    const cover=await gameCovers.get(url);
+    response.set({'ETag':cover.etag,'Cache-Control':'private, max-age=86400'});
+    if(request.headers['if-none-match']===cover.etag) return response.status(304).end();
+    return response.type('jpeg').send(cover.body);
+  } catch { return response.status(502).json({ok:false,error:'封面暂时不可用'}); }
+});
 app.get('/api/nintendo/image', async (request, response) => {
   let url;
   try { url = nintendoImageUrl(request.query.url); }
@@ -123,11 +139,25 @@ for (const [key, collector, method, get] of rankingSources) {
     return response.json({ ok: true, ...data, ...backgroundRefresh.status(key, data) });
   });
   app.post('/api/' + key + '/refresh', (_request, response) => {
-    const queued = !get(_request) && backgroundRefresh.start(key, () => collector[method]());
+    const force = _request.body?.force === true;
+    const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(_request.socket.remoteAddress)
+      && !_request.headers.origin && !_request.headers['x-forwarded-for'];
+    if (force && !local) return response.status(403).json({ ok: false, error: '立即刷新仅限服务器本机操作' });
+    const queued = (force || !get(_request)) && backgroundRefresh.start(
+      key, () => collector[method]({ force }), { scheduled: force });
     response.status(202).json({ ok: true, queued: Boolean(queued), cached: true, nextRefreshAt });
   });
 }
 
+app.get('/api/games/archive', (request,response)=>{
+  const {platform='',q='',status='',page='1'}=request.query;
+  const platforms=['switch1','switch2','switch1_hk','switch2_hk','ps5_hk','ps5_jp','steam','steam_global'];
+  if(typeof platform!=='string'||platform&&!platforms.includes(platform)||typeof q!=='string'||q.length>200||
+    !['','current','exited'].includes(status)||!/^\d{1,7}$/.test(String(page))||Number(page)<1)
+    return response.status(400).json({ok:false,error:'游戏档案查询参数无效'});
+  response.set('Cache-Control','no-store');
+  response.json({ok:true,...priceHistory.catalog({platform,query:q,status,page:Number(page)})});
+});
 app.get('/api/prices/history', async (request, response) => {
   const keys=Array.isArray(request.query.key)?request.query.key:request.query.key?[request.query.key]:[];
   const since=request.query.since?Date.parse(request.query.since):null;
@@ -136,7 +166,7 @@ app.get('/api/prices/history', async (request, response) => {
     return response.status(400).json({ok:false,error:'历史查询参数无效'});
   response.set('Cache-Control', 'no-store');
   const histories=priceHistory.query({keys,since,after,limit:keys.length?1000:4000});
-  response.json({ok:true,histories,continuations:keys.length?priceHistory.continuations(histories):{}});
+  response.json({ok:true,histories,rankingGaps:priceHistory.rankingGaps(Object.keys(histories)),continuations:keys.length?priceHistory.continuations(histories):{}});
 });
 app.get('/api/translations', (_request, response) => {
   const titles = {};
@@ -156,14 +186,25 @@ if (process.env.SERVE_FRONTEND !== '0') {
 }
 
 await Promise.all([nintendoCollector.init(), ps5Collector.init(), ps5JpCollector.init(), steamCollector.init(), steamGlobalCollector.init()]);
+// 用已有静态快照补齐旧档案名称；只补资料，不改历史价格、时间或在榜状态。
+for(const [file,platform] of [['nintendo-data.js',null],['ps5-data.js','ps5_hk'],['ps5-jp-data.js','ps5_jp'],['steam-data.js','steam'],['steam-global-data.js','steam_global']]){
+  try{
+    const source=await readFile(path.resolve(collectorRoot,'..','dist',file),'utf8');
+    const data=JSON.parse(source.replace(/^window\.[A-Z0-9_]+\s*=\s*/,'').replace(/;\s*$/,''));
+    const snapshots=platform?{[platform]:data}:Object.fromEntries(Object.entries(data).map(([key,value])=>[key,value.games||[]]));
+    priceHistory.restoreCatalogMetadata(titleTranslator.decorate(snapshots));
+  }catch{}
+}
 function capturePriceHistory() {
-  return priceHistory.capture({
+  return priceHistory.capture(titleTranslator.decorate({
     ...Object.fromEntries(Object.keys(PLATFORM_CONFIG).map(key => [key, nintendoCollector.get(key)])),
     ps5_hk: ps5Collector.get(), ps5_jp: ps5JpCollector.get(),
     steam: steamCollector.get(), steam_global: steamGlobalCollector.get()
-  });
+  }));
 }
 await capturePriceHistory();
+priceHistory.refreshCatalogTitles(game=>titleTranslator.decorate({...game,price:0}).cn);
+const stopArchiveMetadata=startArchiveMetadata(priceHistory,titleTranslator);
 function translationPayload() {
   return [Object.keys(PLATFORM_CONFIG).map(key => nintendoCollector.get(key)), ps5Collector.get(), ps5JpCollector.get(), steamCollector.get(), steamGlobalCollector.get()];
 }
@@ -193,6 +234,7 @@ if (process.env.COLLECT_ON_START !== '0') {
 
 for (const signal of ['SIGTERM', 'SIGINT']) {
   process.on(signal, () => {
+    stopArchiveMetadata();
     clearTimeout(refreshTimer);
     server.close(() => priceHistory.pending.finally(()=>{priceHistory.close();process.exit(0);}));
     setTimeout(() => process.exit(0), 10_000).unref();

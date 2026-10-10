@@ -2,8 +2,45 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import vm from 'node:vm';
-
 const source = await readFile(new URL('../../dist/app.js', import.meta.url), 'utf8');
+
+test('后台采集和失败只显示真实成功时间，无成功记录时隐藏', () => {
+  const notice={dataset:{}};
+  const scope={Date, $:()=>notice, state:{platform:'ps5',psStore:'hk'},
+    collectorStatusUnavailable:false, ps5Status:{}, ps5JpStatus:{},
+    formatSourceTime:value=>value,
+    collectorPlatformStatus:{
+      ps5:{updatedAt:'港服新时间',refreshState:'partial',stale:true,lastError:'部分商品失败'},
+      ps5_jp:{updatedAt:'日服旧时间',refreshState:'refreshing',lastAttemptAt:new Date(Date.now()-5*60000).toISOString(),progress:{total:100,completed:20,verified:18}}
+    }};
+  const start=source.indexOf('function renderRefreshNotice()');
+  const end=source.indexOf('function normalizeGame',start);
+  vm.runInNewContext(source.slice(start,end)+'\nthis.renderNotice=renderRefreshNotice;',scope);
+  scope.renderNotice();
+  assert.equal(notice.textContent,'上次成功获取：港服新时间');
+  assert.equal(notice.title,'');
+  assert.doesNotMatch(notice.textContent,/后台获取中/);
+  scope.state.psStore='jp';scope.renderNotice();
+  assert.equal(notice.hidden,false);
+  assert.equal(notice.textContent,'上次成功获取：日服旧时间');
+  scope.collectorPlatformStatus.ps5_jp={updatedAt:'日服旧时间',refreshState:'interrupted',stale:true,lastError:'采集因服务重启中断'};
+  scope.renderNotice();
+  assert.equal(notice.hidden,false);
+  assert.equal(notice.textContent,'上次成功获取：日服旧时间');
+  assert.equal(notice.title,'');
+  scope.collectorPlatformStatus.ps5_jp={updatedAt:'日服旧时间',refreshState:'failed',stale:true,lastError:'HTTP 403',lastAttemptAt:'今天 10:00:10'};
+  scope.renderNotice();
+  assert.equal(notice.textContent,'上次成功获取：日服旧时间');
+  assert.equal(notice.dataset.state,'success');
+  assert.equal(notice.title,'');
+  scope.collectorStatusUnavailable=true;
+  scope.renderNotice();
+  assert.equal(notice.textContent,'上次成功获取：日服旧时间');
+  scope.collectorPlatformStatus.ps5_jp={refreshState:'failed',lastError:'连接超时'};
+  scope.renderNotice();
+  assert.equal(notice.hidden,true);
+  assert.equal(notice.textContent,'');
+});
 const baseStart = source.indexOf('const apiBase = (');
 const baseEnd = source.indexOf('async function syncCollectorRefreshMinutes', baseStart);
 const normalizeStart = source.indexOf('function normalizeGame(game)');

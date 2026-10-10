@@ -22,28 +22,78 @@ function game(name, platform, price, id, rank = 1) {
   return { id, name, rawName: name, platform, price, rank, image: `${id}.png`, url: `https://example.com/${id}` };
 }
 
-test('display numbering follows filtering, sorting and pagination without changing source ranks', () => {
+test('display numbering retains overall ranks through sorting, search and pagination', () => {
   const rows = Array.from({ length: 60 }, (_, i) => ({ ...game(`Game ${i}`, 'PS5', 60 - i, `g${i}`, i * 3 + 7), cn: '', meta: '' }));
   const state = { platform: 'ps5', psStore: 'hk', view: 'ranking', sort: 'default', page: 2, query: '' };
-  const scope = { state, datasets: { ps5: rows }, chineseTitleMap: {} };
+  const scope = { state, datasets: { ps5: rows }, chineseTitleMap: {}, isPsPlatform:()=>true };
   const from = app.indexOf('function normalizeSearchText(');
   const to = app.indexOf('const priceCell=', from);
   vm.runInNewContext(app.slice(from, to) + '\nthis.currentData = currentData;', scope);
   assert.deepEqual(Array.from(scope.currentData(), g => g.displayRank), [51,52,53,54,55,56,57,58,59,60]);
   state.sort = 'priceAsc'; state.page = 1;
   assert.equal(scope.currentData()[0].id, 'g59');
-  assert.equal(scope.currentData()[0].displayRank, 1);
-  const unsearched = rows.slice().sort((a,b)=>a.price-b.price).map((g,i)=>({...g,displayRank:i+1}));
+  assert.equal(scope.currentData()[0].displayRank, 60);
+  const unsearched = rows.map((g,i)=>({...g,displayRank:i+1})).sort((a,b)=>a.price-b.price);
   state.query = 'game 5';
   assert.deepEqual(Array.from(scope.currentData(), g => g.displayRank), unsearched.filter(g=>g.name.toLowerCase().includes('game 5')).map(g=>g.displayRank));
   assert.equal(rows[0].rank, 7);
 });
 
-test('Hong Kong grouping retains bases beyond the first 200 groups', () => {
-  context.preparePsDatasets(Array.from({ length: 240 }, (_, i) => ({
-    ...game(`Unique Game ${i}`, 'PS5', i < 200 ? 0 : 100, `unique-${i}`, i + 1), conceptId: `concept-${i}`
-  })));
-  assert.equal(context.datasets.ps5.filter(g => g.price > 0).length, 40);
+test('PS paid and free views number separately and filters retain those ranks', () => {
+  const rows = [
+    {...game('Ordinary', 'PS5', 100, 'ordinary', 2), discount:0},
+    {...game('Discount', 'PS5', 50, 'discount', 4), discount:50},
+    {...game('Free', 'PS5', 0, 'free', 6), isFree:true},
+    {...game('Paid edition', 'PS5', 80, 'paid', 8), discount:20, hasFreeEdition:true,
+      freeGame:{...game('Free edition', 'PS5', 0, 'edition', 99), isFree:true}}
+  ];
+  const state = {platform:'ps5', psStore:'hk', view:'deals', sort:'default', page:1, query:''};
+  const scope = {state, datasets:{ps5:rows}, chineseTitleMap:{}, isPsPlatform:()=>true};
+  const from = app.indexOf('function normalizeSearchText(');
+  const to = app.indexOf('const priceCell=', from);
+  vm.runInNewContext(app.slice(from,to)+'\nthis.currentData = currentData;',scope);
+  assert.deepEqual(Array.from(scope.currentData(),g=>g.displayRank),[2,3]);
+  state.query='discount';
+  assert.deepEqual(Array.from(scope.currentData(),g=>g.displayRank),[2]);
+  state.query=''; state.view='free';
+  assert.deepEqual(Array.from(scope.currentData(),g=>g.displayRank),[1,2]);
+  state.query='edition';
+  assert.deepEqual(Array.from(scope.currentData(),g=>g.displayRank),[2]);
+  state.query=''; state.view='ranking';
+  assert.deepEqual(Array.from(scope.currentData(),g=>g.displayRank),[1,2,3]);
+  assert.equal(rows[1].displayRank,undefined);
+});
+
+test('Steam付费和免费分别从1开始，折扣搜索保留总榜序号', () => {
+  const rows=[
+    {...game('Free top','PC',0,'free',1),isFree:true},
+    {...game('Paid first','PC',100,'first',2),discount:0},
+    {...game('Paid discounted','PC',50,'deal',4),discount:50},
+    {...game('Free other','PC',0,'free-other',6),isFree:true}
+  ];
+  const state={platform:'steam',steamRegion:'cn',view:'ranking',sort:'default',page:1,query:''};
+  const scope={state,datasets:{steam:rows},chineseTitleMap:{},isPsPlatform:()=>false,activeSteamKey:()=>state.steamRegion==='global'?'steam_global':'steam'};
+  const from=app.indexOf('function normalizeSearchText('),to=app.indexOf('const priceCell=',from);
+  vm.runInNewContext(app.slice(from,to)+'\nthis.currentData=currentData;',scope);
+  assert.deepEqual(Array.from(scope.currentData(),g=>g.displayRank),[1,2]);
+  state.view='deals';assert.equal(scope.currentData()[0].displayRank,2);
+  state.view='ranking';state.query='discounted';assert.equal(scope.currentData()[0].displayRank,2);
+  state.query='';state.view='free';assert.deepEqual(Array.from(scope.currentData(),g=>g.displayRank),[1,2]);
+  state.view='ranking';state.sort='priceAsc';assert.equal(scope.currentData()[0].displayRank,2);
+  scope.datasets.steam_global=[{...rows[0]},{...game('Global unavailable','PC',null,'global',3),priceAvailable:false},{...rows[2]}];
+  state.steamRegion='global';state.sort='default';assert.deepEqual(Array.from(scope.currentData(),g=>g.displayRank),[1,2]);
+});
+
+test('港服和日服各保留200款付费游戏，免费游戏不占名额', () => {
+  const rows=Array.from({length:270},(_,i)=>({...game(`Unique Game ${i}`,'PS5',i<30?0:100,`unique-${i}`,i+1),conceptId:`concept-${i}`}));
+  context.preparePsDatasets(rows);
+  context.preparePsJpDatasets(rows);
+  for(const key of ['ps5','ps5_with_ps4','ps5_jp','ps5_jp_with_ps4']){
+    assert.equal(context.datasets[key].filter(g=>g.price>0&&!g.isFree).length,200);
+    assert.equal(context.datasets[key].filter(g=>g.isFree).length,30);
+    assert.equal(context.datasets[key].length,230);
+    assert.equal(context.datasets[key].at(-1).id,'unique-229');
+  }
 });
 
 test('PS5 shows one ordinary edition and prefers PS5 over PS4', () => {
@@ -110,4 +160,9 @@ test('截图中的语言基础版合并，Premium Plus和三部曲商品不冒�
   assert.deepEqual(Array.from(context.groupPs5Games(raw.map(({ conceptId, ...g }) => g)), g => g.id), ['res-zh', 'rev-base']);
   context.preparePsDatasets(raw);
   assert.deepEqual(Array.from(context.datasets.ps5, g => g.id), ['res-zh', 'rev-base']);
+});
+
+test('没有独立售价的基础版仍保留，不误进免费列表',()=>{
+ const groups=context.groupPs5Games([{...game('Subscription Only Game','PS5',null,'subscription',1),priceAvailable:false}]);
+ assert.equal(groups.length,1);assert.equal(groups[0].price,null);assert.equal(groups[0].priceAvailable,false);assert.equal(groups[0].isFree,false);
 });

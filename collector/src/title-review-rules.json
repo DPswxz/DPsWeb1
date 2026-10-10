@@ -3182,5 +3182,408 @@
     "cn": "Schedule I",
     "source": "https://store.steampowered.com/app/3164500/?l=schinese",
     "kind": "已搜索核对，未确认可靠中文名"
+  },
+  {
+    "aliases": [
+      "Baldur's Gate 3",
+      "Baldur’s Gate 3",
+      "柏德之門3",
+      "柏德之门3",
+      "博德之門3",
+      "博德之门3"
+    ],
+    "cn": "博德之门3",
+    "source": "https://www.playstation.com/zh-hans-hk/games/baldurs-gate-3/",
+    "kind": "官方简体名称；跨区专名统一"
+  },
+  {
+    "aliases": [
+      "柏德之門3 - 數位豪華版",
+      "柏德之门3 - 数位豪华版",
+      "Baldur's Gate 3 - Digital Deluxe Edition",
+      "博德之门3 - 数字豪华版"
+    ],
+    "cn": "博德之门3 - 数字豪华版",
+    "source": "https://store.playstation.com/zh-hans-hk/concept/10007460",
+    "kind": "同一官方商品及版本核对"
+  },
+  {
+    "aliases": [
+      "Hades II"
+    ],
+    "cn": "哈迪斯 II",
+    "kind": "user-preference",
+    "source": "用户指定名称（保留此前纠正）"
+  },
+  {
+    "aliases": [
+      "Overcooked! 2",
+      "Overcooked 2"
+    ],
+    "cn": "胡闹厨房2",
+    "kind": "user-preference",
+    "source": "用户指定名称（保留此前纠正）"
+  },
+  {
+    "aliases": [
+      "Fire Emblem: Fortune's Weave",
+      "ファイアーエムブレム 万紫千紅"
+    ],
+    "cn": "火焰纹章 万紫千紅",
+    "kind": "user-preference",
+    "source": "用户指定名称（保留此前纠正）"
+  },
+  {
+    "aliases": [
+      "Metaphor :ReFantazio",
+      "Metaphor: ReFantazio",
+      "メタファー：リファンタジオ"
+    ],
+    "cn": "暗喻幻想",
+    "kind": "user-preference",
+    "source": "用户指定名称（保留此前纠正）"
+  },
+  {
+    "aliases": [
+      "Dying Light: The Beast",
+      "消逝的光芒：困兽"
+    ],
+    "cn": "消逝的光芒：困兽",
+    "source": "https://store.steampowered.com/app/3008130/?l=schinese",
+    "kind": "联网核对官方中文名"
+  },
+  {
+    "aliases": [
+      "Delta Force (F2P)",
+      "Delta Force",
+      "三角洲行动"
+    ],
+    "cn": "三角洲行动",
+    "source": "https://static.www.tencent.com/uploads/2024/11/13/4450cfc37b02acd7f727f2cd63fd6de7.pdf",
+    "kind": "开发商官方名称，免费属性由价格标签显示"
+  },
+  {
+    "aliases": [
+      "ヒューマン フォール フラット",
+      "Human Fall Flat",
+      "Human: Fall Flat",
+      "人类一败涂地 / Human Fall Flat"
+    ],
+    "cn": "人类：一败涂地",
+    "source": "https://store.steampowered.com/app/477160/?l=schinese",
+    "kind": "同一作品官方中文名"
+  },
+  {
+    "aliases": [
+      "Rise of the Ronin",
+      "Rise of the Rōnin"
+    ],
+    "cn": "浪人崛起",
+    "source": "https://www.playstation.com/zh-hans-hk/games/rise-of-the-ronin/",
+    "kind": "联网核对官方中文名"
+  },
+  {
+    "aliases": [
+      "Heartopia"
+    ],
+    "cn": "心动小镇",
+    "source": "https://store.steampowered.com/app/4025700/?l=schinese",
+    "kind": "联网核对官方中文名"
+  },
+  {
+    "aliases": [
+      "Vampire Survivors"
+    ],
+    "cn": "吸血鬼幸存者",
+    "source": "https://store.steampowered.com/app/1794680/?l=schinese",
+    "kind": "联网核对官方中文名"
+  },
+  {
+    "aliases": [
+      "Where Winds Meet"
+    ],
+    "cn": "燕云十六声",
+    "source": "https://store.steampowered.com/app/3564740/?l=schinese",
+    "kind": "联网核对官方中文名"
+  },
+  {
+    "aliases": [
+      "PowerWash Simulator 2"
+    ],
+    "cn": "冲就完事模拟器2",
+    "source": "https://store.steampowered.com/app/2968420/?l=schinese",
+    "kind": "联网核对官方中文名"
+  },
+  {
+    "aliases": [
+      "Nintendo Switch Sports"
+    ],
+    "cn": "Nintendo Switch 运动",
+    "source": "https://www.nintendo.com/hk/switch/as8sa/",
+    "kind": "联网核对官方中文名"
+  },
+  {
+    "aliases": [
+      "ストレイ",
+      "Stray"
+    ],
+    "cn": "迷失",
+    "source": "用户指定：Stray → 迷失；https://blog.ja.playstation.com/2022/07/27/20220727-stray/",
+    "kind": "user-preference"
+  },
+  {
+    "aliases": [
+      "BIOHAZARD RE:2"
+    ],
+    "cn": "生化危机2 重制版",
+    "source": "https://www.residentevil.com/re2/",
+    "kind": "人工核对系列作品日英文别名"
+  },
+  {
+    "aliases": [
+      "BIOHAZARD VILLAGE"
+    ],
+    "cn": "生化危机8：村庄",
+    "source": "https://www.residentevil.com/village/",
+    "kind": "人工核对系列作品日英文别名"
+  },
+  {
+    "aliases": [
+      "Dragon's Dogma 2: Dark Arisen",
+      "Dragon&#x27;s Dogma 2: Dark Arisen",
+      "Dragon’s Dogma 2: Dark Arisen",
+      "Dragon's Dogma II: Dark Arisen"
+    ],
+    "cn": "龙之信条2：黑暗觉者",
+    "source": "https://www.bilibili.com/video/BV1ZjHm6pEpk/",
+    "kind": "联网核对通行中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Dragon's Dogma 2",
+      "Dragon&#x27;s Dogma 2",
+      "Dragon’s Dogma 2",
+      "ドラゴンズドグマ 2",
+      "ドラゴンズドグマ2"
+    ],
+    "cn": "龙之信条2",
+    "source": "https://awards.cesa.or.jp/pdf/en/press/20240926_2_cs.pdf",
+    "kind": "联网核对官方中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Dragon's Dogma 2: Dark Arisen Expansion"
+    ],
+    "cn": "龙之信条2：黑暗觉者 扩展包",
+    "source": "https://store.captown.capcom.com/en/products/1686546-jp",
+    "kind": "联网核对版本身份及通行中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Dragon's Dogma 2 Character Creator & Storage",
+      "Dragon's Dogma 2 創建＆保存角色",
+      "Dragon&#x27;s Dogma 2 角色编辑＆保存"
+    ],
+    "cn": "龙之信条2 创建&保存角色",
+    "source": "https://store.steampowered.com/app/2674810/",
+    "kind": "同一商品版本核对",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Ghost of Tsushima DIRECTOR’S CUT",
+      "Ghost of Tsushima Director's Cut"
+    ],
+    "cn": "对马岛之魂 导演剪辑版",
+    "source": "https://www.gamersky.com/z/ghostoftsushima/",
+    "kind": "联网核对通行中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Neon Abyss 2"
+    ],
+    "cn": "霓虹深渊2",
+    "source": "https://www.hkexnews.hk/listedco/listconews/sehk/2025/0425/2025042501709.pdf",
+    "kind": "发行商公告中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Hollow Knight: Silksong"
+    ],
+    "cn": "空洞骑士：丝之歌",
+    "source": "https://zh.wikipedia.org/wiki/空洞骑士：丝之歌",
+    "kind": "联网核对通行中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "NINJA GAIDEN 2 Black"
+    ],
+    "cn": "忍者龙剑传2 黑之章",
+    "source": "https://zh.wikipedia.org/wiki/忍者外傳系列",
+    "kind": "联网核对通行中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "The First Berserker: Khazan"
+    ],
+    "cn": "第一狂战士：卡赞",
+    "source": "https://www.gamersky.com/z/khazan/",
+    "kind": "联网核对通行中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "The Long Dark"
+    ],
+    "cn": "漫漫长夜",
+    "source": "https://store.steampowered.com/app/305620/?l=schinese",
+    "kind": "官方中文介绍作品名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Devil May Cry 5"
+    ],
+    "cn": "鬼泣5",
+    "source": "https://awards.cesa.or.jp/2019/en/release/pdf/20190912_3_cs.pdf",
+    "kind": "联网核对官方中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "The Escapists 2"
+    ],
+    "cn": "逃脱者2",
+    "source": "https://zh.wikipedia.org/wiki/逃脱者2",
+    "kind": "联网核对通行中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Sonic Racing: CrossWorlds",
+      "ソニックレーシング クロスワールド",
+      "ソニックレーシング クロスワールド PS4 & PS5"
+    ],
+    "cn": "索尼克赛车 交叉世界",
+    "source": "https://www.playstation.com/zh-hans-hk/explore-sonic-the-hedgehog/",
+    "kind": "联网核对官方中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Overcooked! All You Can Eat"
+    ],
+    "cn": "胡闹厨房 全都好吃",
+    "source": "https://asia.gamesource-ent.com/zh-Hans-HK/detail/338",
+    "kind": "发行商官方中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Wolfenstein II: The New Colossus"
+    ],
+    "cn": "德军总部II：新巨像",
+    "source": "https://zh.wikipedia.org/wiki/德军总部II：新巨像",
+    "kind": "联网核对通行中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Just Cause 4 Reloaded"
+    ],
+    "cn": "正当防卫4 Reloaded",
+    "source": "https://www.gamersky.com/z/justcause4/",
+    "kind": "通行基础名；保留版本原文",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "MapleStory"
+    ],
+    "cn": "冒险岛",
+    "source": "https://maplestoryworlds.nexon.com/zh-cn/play/bef3ee2b564449d6b214bfe02a2b4ccc/",
+    "kind": "联网核对官方中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Call of Duty",
+      "Call of Duty®"
+    ],
+    "cn": "使命召唤",
+    "source": "https://www.playstation.com/zh-hans-hk/call-of-duty/",
+    "kind": "游戏中心名称，不能冒充战争地带",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "グランド・セフト・オートV (PlayStation®5)"
+    ],
+    "cn": "侠盗猎车手V (PlayStation 5)",
+    "source": "https://store.rockstargames.com/zh-Hant/game/buy-gta-v",
+    "kind": "通行中文名；本体不能冒充在线模式",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "めっちゃカメレオン",
+      "MECCHA CHAMELEON"
+    ],
+    "cn": "MECCHA CHAMELEON",
+    "source": "https://mendoi-apps.com/zh-hans/articles/meccha-chameleon-inkya-kai-strategy/",
+    "kind": "未确认正式中文名，撤回猜译",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Returnal",
+      "Returnal™"
+    ],
+    "cn": "死亡回归",
+    "source": "https://www.gamersky.com/z/returnal/",
+    "kind": "联网核对通行中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Demon’s Souls",
+      "Demon's Souls"
+    ],
+    "cn": "恶魔之魂",
+    "source": "https://www.gamersky.com/z/demonssouls/",
+    "kind": "联网核对通行中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "CODE VEIN II"
+    ],
+    "cn": "噬血代码 II",
+    "source": "https://www.gamersky.com/z/codevein2/",
+    "kind": "联网核对通行中文名",
+    "checkedAt": "2026-10-10"
+  },
+  {
+    "aliases": [
+      "Overcooked® 2 - オーバークック２"
+    ],
+    "cn": "胡闹厨房2",
+    "source": "用户指定译名",
+    "kind": "user-preference"
+  },
+  {
+    "aliases": [
+      "Overcooked® 2 - オーバークック２：真の食通エディション"
+    ],
+    "cn": "胡闹厨房2 真·美食家版",
+    "source": "用户指定基础译名，保留版本身份",
+    "kind": "user-preference"
   }
 ]

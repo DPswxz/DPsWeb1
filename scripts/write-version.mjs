@@ -6,7 +6,7 @@ const htmlFile = new URL('index.html', root);
 const normalizedHtml = (await readFile(htmlFile, 'utf8'))
   .replace(/\?v=[^"']+/g, '?v=BUILD')
   .replace(/\s*<meta name="game-pulse-version" content="[^"]*"\s*\/>/g, '');
-for (const file of ['index.html', 'app.js', 'styles.css', 'config.js', 'update-client.js', 'nintendo-data.js', 'ps5-data.js', 'ps5-jp-data.js', 'steam-data.js', 'steam-global-data.js']) {
+for (const file of ['index.html', 'app.js', 'archive.js', 'styles.css', 'config.js', 'update-client.js', 'cover-cache.js', 'nintendo-data.js', 'ps5-data.js', 'ps5-jp-data.js', 'steam-data.js', 'steam-global-data.js']) {
   hash.update(file).update(file === 'index.html' ? normalizedHtml : await readFile(new URL(file, root)));
 }
 const backend = new URL('../collector/src/', import.meta.url);

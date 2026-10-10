@@ -208,6 +208,10 @@ export class PlayStationJpCollector {
     return this.cache;
   }
 
+  get progress() {
+    return this.activeCollector?.progress;
+  }
+
   async refresh({ force = false } = {}) {
     if (this.refreshing) return this.refreshing;
     const maxAge = this.refreshMinutes * 60 * 1000;
@@ -256,6 +260,7 @@ export class PlayStationJpCollector {
       cacheFile: this.cacheFile, refreshMinutes: this.refreshMinutes,
       fallbackFile: null, region: 'jp', request: this.request
     });
+    this.activeCollector = collector;
     collector.cache = this.cache;
     const result = await collector.refresh({force:true});
     if (result) {

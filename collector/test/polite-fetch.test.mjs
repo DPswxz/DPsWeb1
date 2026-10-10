@@ -5,6 +5,25 @@ import os from 'node:os';
 import path from 'node:path';
 import { createPoliteFetch } from '../src/polite-fetch.mjs';
 
+test('排队中的地区采集超时立即返回，不等待其他地区请求结束', async () => {
+  let release, started, calls=0;
+  const ready=new Promise(resolve=>{started=resolve;});
+  const request=createPoliteFetch({gapMs:0,fetchImpl:async()=>{
+    calls++;started();await new Promise(resolve=>{release=resolve;});
+    return new Response('ok');
+  }});
+  const first=request('https://store.playstation.com/hk');
+  await ready;
+  const controller=new AbortController();
+  const queued=request('https://store.playstation.com/jp',{signal:controller.signal});
+  controller.abort(new Error('采集超时'));
+  await assert.rejects(queued,/采集超时/);
+  assert.equal(calls,1);
+  release();await first;
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(calls,1,'已超时的排队任务不再发出网络请求');
+});
+
 test('PS regional requests share one queue and leave two seconds between completed downloads', async () => {
   let now = 0, active = 0, maxActive = 0;
   const starts = [];
@@ -33,4 +52,10 @@ test('429 honors Retry-After, stops queued requests and preserves cooldown acros
   now += 7200000;
   await assert.rejects(request('https://store.playstation.com/hk'), /429/);
   assert.equal(calls, 2);
+});
+
+test('短暂网络失败只暂停一分钟，后续排队任务恢复而不连续失败',async()=>{
+ let now=0,calls=0;const request=createPoliteFetch({now:()=>now,sleep:async ms=>{now+=ms;},fetchImpl:async()=>{if(++calls===1)throw new Error('连接超时');return new Response('ok');}});
+ await assert.rejects(request('https://store.playstation.com/first'),/连接超时/);
+ assert.equal(await(await request('https://store.playstation.com/next')).text(),'ok');assert.equal(calls,2);assert.ok(now>=60000);
 });
