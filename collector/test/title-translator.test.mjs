@@ -6,6 +6,38 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { TitleTranslator, titleKey } from '../src/title-translator.mjs';
 
+test('日服榜单补充译名覆盖旧缓存，前端与服务器一致且不调用翻译API', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'jp-reviewed-titles-'));
+  const translator = new TitleTranslator(path.join(directory, 'titles.sqlite'), {
+    apiKey: 'test', fetchImpl: () => { throw new Error('应使用核对译名'); }
+  });
+  const cases = [
+    ['ポケットモンスター ソード', '宝可梦 剑'],
+    ['アルセウス', '宝可梦传说 阿尔宙斯'],
+    ['Pokémon LEGENDS アルセウス', '宝可梦传说 阿尔宙斯'],
+    ['ほの暮しの庭', '静谧田园'],
+    ['ペルソナ3 ポータブル', '女神异闻录3 携带版'],
+    ['ペルソナ３ ポータブル', '女神异闻录3 携带版'],
+    ['ウィザードリィ外伝 五つの試練 トリプルパック', '巫术外传 五重试炼 三合一套装'],
+    ['ペルソナ4 ザ・ゴールデン', '女神异闻录4 黄金版'],
+    ['ペルソナ４ ザ・ゴールデン', '女神异闻录4 黄金版'],
+    ['ぼくと釣り日記', '我与钓鱼日记']
+  ];
+  await translator.init();
+  try {
+    for (const [name] of cases) translator.db.prepare("UPDATE titles SET translated='旧错误缓存',status='translated' WHERE name=?").run(titleKey(name));
+    translator.close();
+    await translator.init();
+    const payload = cases.map(([name]) => ({ id: 'fixture', name, cn: name, price: 1 }));
+    assert.deepEqual(translator.decorate(payload).map(game => game.cn), cases.map(([, cn]) => cn));
+    assert.deepEqual(translator.scan(payload), []);
+    const frontend = await readFile(new URL('../../dist/app.js', import.meta.url), 'utf8');
+    const { runInNewContext } = await import('node:vm');
+    const map = runInNewContext(frontend.slice(0, frontend.indexOf('const datasets')) + '\nchineseTitleMap');
+    for (const [name, cn] of cases) assert.equal(map[name], cn);
+  } finally { translator.close(); await rm(directory, { recursive: true, force: true }); }
+});
+
 test('龙之信条本体、黑暗觉者和角色编辑器分别核对，商品及历史档案不重复翻译',async()=>{
  const directory=await mkdtemp(path.join(os.tmpdir(),'dragon-titles-'));
  let calls=0;

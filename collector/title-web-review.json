@@ -57,10 +57,11 @@
   },
   {
     "name": "ウィザードリィ外伝 五つの試練 トリプルパック",
-    "after": "ウィザードリィ外伝 五つの試練 トリプルパック",
+    "after": "巫术外传 五重试炼 三合一套装",
     "decision": "已搜索核对，未确认可靠中文名",
-    "source": "https://store.steampowered.com/app/1308700/?l=tchinese",
-    "checkedAt": "2026-10-04"
+    "source": "https://store.steampowered.com/bundle/33293/?l=schinese",
+    "checkedAt": "2026-10-04",
+    "method": "人工中文翻译；官方商店仍用英文，未确认官方中文名"
   },
   {
     "name": "God of War Laufey™ (中英韩文版)",
