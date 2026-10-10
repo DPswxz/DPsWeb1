@@ -532,3 +532,9 @@ th.col-history[hidden], td.col-history[hidden] { display: none !important; }
 
 .site-credit{margin-top:16px;padding:12px 0;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 12px;color:var(--muted);font-size:12px;line-height:21px}.site-credit>span{white-space:nowrap}.credit-divider{opacity:.5}.site-credit a{color:var(--mint);text-decoration:none}.site-credit a:hover{text-decoration:underline}.site-credit a:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
 @media(max-width:380px){.site-credit{gap:4px 8px;font-size:11px}}
+
+/* 按图形实际轮廓校准视觉大小，宽标志保留原始比例。 */
+.platform-tab .plat-icon{width:20px;height:20px;flex:none;display:block}
+.platform-tab .plat-icon.switch2-icon{width:33px;height:18px}
+.platform-tab .plat-icon.ps-icon{width:24px;height:24px}
+.platform-tab .plat-icon.steam-icon{width:20px;height:20px}
