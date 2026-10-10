@@ -1,10 +1,11 @@
 [
   {
     "name": "ダービースタリオン２",
-    "after": "ダービースタリオン2",
+    "after": "德贝赛马2",
     "decision": "已搜索核对，未确认可靠中文名",
-    "source": "https://www.gameaddict.co.jp/derbystallion2/",
-    "checkedAt": "2026-10-04"
+    "source": "用户指定译名",
+    "checkedAt": "2026-10-04",
+    "method": "用户指定中文显示名"
   },
   {
     "name": "ヴィラクタル(Viractal) Nintendo Switch 2 Edition",

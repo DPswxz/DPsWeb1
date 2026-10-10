@@ -135,7 +135,7 @@ const chineseTitleMap = new Proxy({
   "「ディアブロ IV: 憎悪の時代」コレクション": "暗黑破坏神IV 「憎悪の時代」合集",
   "ロマンシング サガ2 リベンジオブザセブン Nintendo Switch 2 Edition": "浪漫沙加2 七英雄的复仇 Switch 2版",
   "アナザーエデン ビギンズ Nintendo Switch 2 Edition": "另一个伊甸 起源 Switch 2版",
-  "ダービースタリオン２": "ダービースタリオン2",
+  "ダービースタリオン２": "德贝赛马2",
   "鬼武者 Way of the Sword": "鬼武者 Way of the Sword",
   "FINAL FANTASY VII REBIRTH": "FINAL FANTASY VII REBIRTH",
   "スプラトゥーン レイダース": "斯普拉遁 Raiders",
@@ -4388,7 +4388,8 @@ const chineseTitleMap = new Proxy({
   "Wizardry外伝 五つの試練 トリプルパック": "巫术外传 五重试炼 三合一套装",
   "Wizardry: The Five Ordeals Triple Pack": "巫术外传 五重试炼 三合一套装",
   "ペルソナ4 ザ・ゴールデン": "女神异闻录4 黄金版",
-  "Persona 4 Golden": "女神异闻录4 黄金版"
+  "Persona 4 Golden": "女神异闻录4 黄金版",
+  "ダービースタリオン2": "德贝赛马2"
 }, {
   normalize(title) {
     return title.replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
