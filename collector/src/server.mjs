@@ -171,7 +171,7 @@ app.get('/api/prices/history', async (request, response) => {
 app.get('/api/translations', (_request, response) => {
   const titles = {};
   titleTranslator.visit(translationPayload(), game => {
-    const cn = titleTranslator.decorate({ name: game.name, price: 0 }).cn;
+    const cn = titleTranslator.decorate({ ...game, price: 0 }).cn;
     if (cn && cn !== game.name) titles[game.name] = cn;
   });
   response.set('Cache-Control', 'no-store');
