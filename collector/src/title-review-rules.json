@@ -3653,5 +3653,13 @@
     "cn": "我与钓鱼日记",
     "source": "https://bokutotsurinikki.imgs.jp/",
     "kind": "通行中文译名；未确认官方中文名，中文参考 https://bangumi.tv/subject/665540"
+  },
+  {
+    "aliases": [
+      "Risk of Rain 2"
+    ],
+    "cn": "雨中冒险 2",
+    "source": "https://store.steampowered.com/app/632360/?l=schinese",
+    "kind": "按本体商品ID区分本体与DLC套装"
   }
 ]

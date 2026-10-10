@@ -6,6 +6,34 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { TitleTranslator, titleKey } from '../src/title-translator.mjs';
 
+test('Steam 译名按商品身份匹配，前端不会被同名缓存覆盖或把套餐当本体', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'steam-product-titles-'));
+  const translator = new TitleTranslator(path.join(directory, 'titles.sqlite'));
+  await translator.init();
+  try {
+    const frontend = await readFile(new URL('../../dist/app.js', import.meta.url), 'utf8');
+    const { runInNewContext } = await import('node:vm');
+    const resolve = runInNewContext(frontend.slice(0, frontend.indexOf('const datasets')) + '\nsteamDisplayTitle');
+    const products = translator.productNames;
+    const entries = Object.entries(products).filter(([key]) => key.startsWith('steam:'));
+    assert.ok(entries.length > 1);
+    for (const [key, cn] of entries) {
+      const id = key.slice(6);
+      const game = { id, name: 'Wrong shared title', cn: '错误套装名', platform: 'PC', price: 26.4, url: `https://store.steampowered.com/app/${id}/` };
+      assert.equal(resolve(game), cn, key);
+      assert.equal(translator.decorate(game).cn, cn, key);
+      for (const type of ['bundle', 'sub']) {
+        const pack = { ...game, productType: type, url: `https://store.steampowered.com/${type}/${id}/`, cn: '独立套装名称' };
+        assert.equal(translator.productName(pack), null);
+        assert.equal(resolve(pack), '独立套装名称');
+      }
+    }
+    const app = { id: '632360', name: 'Risk of Rain 2', platform: 'PC', price: 26.4 };
+    assert.equal(resolve(app), '雨中冒险 2');
+    assert.equal(translator.decorate(app).cn, '雨中冒险 2');
+  } finally { translator.close(); await rm(directory, { recursive: true, force: true }); }
+});
+
 test('日服榜单补充译名覆盖旧缓存，前端与服务器一致且不调用翻译API', async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'jp-reviewed-titles-'));
   const translator = new TitleTranslator(path.join(directory, 'titles.sqlite'), {
@@ -21,7 +49,8 @@ test('日服榜单补充译名覆盖旧缓存，前端与服务器一致且不�
     ['ウィザードリィ外伝 五つの試練 トリプルパック', '巫术外传 五重试炼 三合一套装'],
     ['ペルソナ4 ザ・ゴールデン', '女神异闻录4 黄金版'],
     ['ペルソナ４ ザ・ゴールデン', '女神异闻录4 黄金版'],
-    ['ぼくと釣り日記', '我与钓鱼日记']
+    ['ぼくと釣り日記', '我与钓鱼日记'],
+    ['Risk of Rain 2', '雨中冒险 2']
   ];
   await translator.init();
   try {

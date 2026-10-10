@@ -57,6 +57,12 @@ export class TitleTranslator {
     const family=platform.startsWith('steam')||game.platform==='PC'||url.includes('store.steampowered.com')?'steam':
       platform==='ps5_jp'||url.includes('store.playstation.com/ja-jp/')?'ps5_jp':
       platform==='ps5_hk'||url.includes('store.playstation.com/zh-')?'ps5_hk':'';
+    if(family==='steam'){
+      const identity=url.match(/store\.steampowered\.com\/(app|bundle|sub)\/(\d+)/);
+      const type=identity?.[1]||game.productType||'app';
+      if(type!=='app')return null;
+      return this.productNames[`steam:${identity?.[2]||game.id}`];
+    }
     return family?this.productNames[`${family}:${game.id}`]:null;
   }
   decorate(payload) {
