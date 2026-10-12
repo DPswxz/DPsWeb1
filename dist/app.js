@@ -5203,7 +5203,7 @@ function parseBaseGame(name) {
     };
   }
   // 1. 移除平台后缀，例如 PS4 & PS5, PS4® & PS5®, (PlayStation®5), PS5, PS4 等
-  cleaned = cleaned.replace(/\s*(?:PS4\s*(?:&|＆|\/)\s*PS5|PS4[®™]?\s*(?:&|＆|\/)\s*PS5[®™]?|\(PS4\s*(?:&|＆|\/)\s*PS5\)|\(PlayStation[®™]?5\)|\(PS5\)|\(PS4\)|PlayStation[®™]?5|PS5[®™]?|PS4[®™]?)\s*$/gi, '').trim();
+  cleaned = cleaned.replace(/\s*(?:PS4\s*(?:&|＆|\/|和|與|与|and)\s*PS5|PS4[®™]?\s*(?:&|＆|\/|和|與|与|and)\s*PS5[®™]?|\(PS4\s*(?:&|＆|\/|和|與|与|and)\s*PS5\)|\(PlayStation[®™]?5\)|\(PS5\)|\(PS4\)|PlayStation[®™]?5|PS5[®™]?|PS4[®™]?)\s*$/gi, '').trim();
 
   // 2. 提取并移除语言后缀，支持多层括号嵌套
   let lang = '';
@@ -5948,33 +5948,6 @@ function saveSettings() {
   }
 }
 
-function clearBrowserDataCache() {
-  const keys = [];
-  for (let index = 0; index < localStorage.length; index++) {
-    const key = localStorage.key(index);
-    if (key?.startsWith('game-pulse-') && key !== SETTINGS_STORAGE_KEY) keys.push(key);
-  }
-  for (const key of keys) localStorage.removeItem(key);
-}
-
-$('#clearCacheButton')?.addEventListener('click', async () => {
-  if (!startupDataReady || refreshInProgress) return;
-  const button = $('#clearCacheButton');
-  button.disabled = true;
-  button.textContent = '正在清除…';
-  try {
-    clearBrowserDataCache();
-    await window.GameCoverCache?.clear();
-    location.reload();
-  } catch (error) {
-    button.disabled = false;
-    button.textContent = '清除缓存';
-    toastQueue.push({ title: '缓存清除失败', detail: '浏览器未允许访问本地存储，请检查隐私设置后重试。' });
-    showNextRefreshToast();
-    console.warn('清除缓存失败：', error);
-  }
-});
-
 /* ================= 历史价格存储与阶梯走势图逻辑 ================= */
 /* ================= 真实价格追踪与变动记录逻辑 ================= */
 
@@ -6143,7 +6116,7 @@ function renderMiniSparklineSvg(history) {
     return `<svg class="mini-sparkline" viewBox="0 0 72 16"><line x1="2" y1="8" x2="70" y2="8" stroke="#31524b" stroke-width="1.8" stroke-dasharray="3 3"/></svg>`;
   }
   const { solid,dashed } = priceChartPath(model, 2, 70, 1, 15);
-  return `<svg class="mini-sparkline" viewBox="0 0 72 16"><path d="${solid}" fill="none" stroke="#a2e005" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="${dashed}" fill="none" stroke="#a2e005" stroke-width="1.8" stroke-dasharray="3 3"/></svg>`;
+  return `<svg class="mini-sparkline" viewBox="0 0 72 16"><path d="${solid}" fill="none" stroke="var(--mint)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="${dashed}" fill="none" stroke="var(--mint)" stroke-width="1.8" stroke-dasharray="3 3"/></svg>`;
 
 }
 
@@ -6205,7 +6178,7 @@ function renderStepChart(history, game, container) {
     }
   }
   const startX=x(model.records[0].time);
-  container.innerHTML = `<svg class="chart-svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${chartRange ? `最近${chartRange}个月` : '全部'}已记录的价格走势">${ticks}<path d="${line} L ${right} ${bottom} L ${startX} ${bottom} Z" fill="#a2e005" opacity=".08"/><line x1="${startX}" x2="${right}" y1="${y(low)}" y2="${y(low)}" stroke="#3898ec" stroke-dasharray="4 4"/><path d="${solid}" fill="none" stroke="#a2e005" stroke-width="2" stroke-linejoin="round"/><path d="${dashed}" fill="none" stroke="#a2e005" stroke-width="2" stroke-dasharray="5 4"/><circle cx="${startX}" cy="${y(values[0])}" r="3" fill="#a2e005"/><g id="chartCursor" hidden><line y1="${top}" y2="${bottom}" stroke="#a2e005" stroke-dasharray="2 3"/><circle r="4" fill="#a2e005"/></g></svg><div class="price-chart-tooltip" hidden></div>`;
+  container.innerHTML = `<svg class="chart-svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${chartRange ? `最近${chartRange}个月` : '全部'}已记录的价格走势">${ticks}<path d="${line} L ${right} ${bottom} L ${startX} ${bottom} Z" fill="var(--mint)" opacity=".08"/><line x1="${startX}" x2="${right}" y1="${y(low)}" y2="${y(low)}" stroke="#3898ec" stroke-dasharray="4 4"/><path d="${solid}" fill="none" stroke="var(--mint)" stroke-width="2" stroke-linejoin="round"/><path d="${dashed}" fill="none" stroke="var(--mint)" stroke-width="2" stroke-dasharray="5 4"/><circle cx="${startX}" cy="${y(values[0])}" r="3" fill="var(--mint)"/><g id="chartCursor" hidden><line y1="${top}" y2="${bottom}" stroke="var(--mint)" stroke-dasharray="2 3"/><circle r="4" fill="var(--mint)"/></g></svg><div class="price-chart-tooltip" hidden></div>`;
   const cursor = container.querySelector('#chartCursor');
   const cursorLine = cursor.querySelector('line');
   const dot = cursor.querySelector('circle');
@@ -6335,7 +6308,7 @@ async function openPriceModal(game, {updated=false}={}) {
       const cnyVal = gameRecordCny(game,rec.price);
       let changeTag = '';
       if (idx === reversed.length - 1) {
-        changeTag = `<span style="color:#8ef0d4">● ${rec.note || '首次采集建档基准'}</span>`;
+        changeTag = `<span style="color:#66c0f4">● ${rec.note || '首次采集建档基准'}</span>`;
       } else {
         const nextInTime = reversed[idx + 1];
         const diff = rec.price - nextInTime.price;
@@ -6345,7 +6318,7 @@ async function openPriceModal(game, {updated=false}={}) {
           changeTag = `<span style="color:#ff6d9d">${notePrefix}降价 -${pct}% ${isLowest ? '(史低)' : ''}</span>`;
         } else if (diff > 0) {
           const pct = Math.round(diff / nextInTime.price * 100);
-          changeTag = `<span style="color:#8ef0d4">${notePrefix}原价恢复 +${pct}%</span>`;
+          changeTag = `<span style="color:#66c0f4">${notePrefix}原价恢复 +${pct}%</span>`;
         } else {
           changeTag = `<span style="color:#657980">${rec.note || '价格持平'}</span>`;
         }
@@ -6353,7 +6326,7 @@ async function openPriceModal(game, {updated=false}={}) {
       return `
         <tr>
           <td data-label="记录时间">${escapeHtml(new Date(rec.date).toLocaleString('zh-CN'))}</td>
-          <td style="color:${isLowest ? '#a2e005' : '#edf7f4'};font-weight:600">${gameRecordMoney(game,rec.price)}</td>
+          <td style="color:${isLowest ? 'var(--mint)' : '#edf7f4'};font-weight:600">${gameRecordMoney(game,rec.price)}</td>
           <td data-label="折合人民币" style="color:#9baeb2">${cnyVal}</td>
           <td data-label="变动" class="history-change">${changeTag}</td>
         </tr>
@@ -6512,14 +6485,14 @@ const priceCell=(g,{inlinePlatform=false}={})=>{
     return isPsPlatform(state.platform)?'<div class="price-stack"><span class="price-main">暂未提供售价</span></div>':`<div class="price-stack"><span class="price-main">国区未定价</span><span class="price-cny">${platformPrefix}全球排名仍有效</span></div>`;
   }
   if (g.price === 0) {
-    return `<div class="price-stack"><span class="price-main" style="color:var(--steam-mint, #38ef7d);font-weight:700">免费游玩</span><span class="price-cny">${platformPrefix}Free to Play</span></div>`;
+    return `<div class="price-stack"><span class="price-main" style="color:var(--steam-mint, #66c0f4);font-weight:700">免费游玩</span><span class="price-cny">${platformPrefix}Free to Play</span></div>`;
   }
   return `<div class="price-stack">${g.discount?`<span class="deal-chip">-${g.discount}%</span>`:''}<span class="price-main">${money(g.price)}</span>${g.old?`<span class="price-old">${money(g.old)}</span>`:''}<span class="price-cny">${platformPrefix}${state.platform==='steam'?(state.steamRegion==='global'?'中国区参考价':'人民币定价'):`≈ ${cny(g.price)}`}</span></div>`;
 };
 
 function groupPriceCell(g) {
   if (g.price === 0 && (!g.maxPrice || g.maxPrice === 0)) {
-    return `<div class="price-stack"><span class="price-main" style="color:var(--steam-mint, #38ef7d);font-weight:700">免费游玩</span><span class="price-cny">Free to Play</span></div>`;
+    return `<div class="price-stack"><span class="price-main" style="color:var(--steam-mint, #66c0f4);font-weight:700">免费游玩</span><span class="price-cny">Free to Play</span></div>`;
   }
   const hasDiscount = g.discount > 0;
   const hasRange = g.maxPrice != null && g.maxPrice > g.price;
@@ -6894,7 +6867,7 @@ function render(){
   if (sourceTag) {
     sourceTag.textContent = isStale ? '缓存数据' : '官方直采';
     sourceTag.style.color = isStale ? '#ffb347' : 'var(--mint)';
-    sourceTag.style.background = isStale ? 'rgba(255,179,71,.12)' : 'rgba(142,240,212,.08)';
+    sourceTag.style.background = isStale ? 'rgba(255,179,71,.12)' : 'rgba(var(--accent-rgb),.08)';
   }
   if (sStatus) {
     sStatus.textContent = isStale ? `${sourceLabel} 缓存` : `${sourceLabel} 官方数据`;
@@ -6910,8 +6883,6 @@ async function refresh({notify=false,silent=false}={}){
   if(refreshInProgress)return;
   refreshInProgress=true;
   fetchExchangeRates().then(()=>render()).catch(error=>console.warn('汇率刷新失败：',error));
-  const cacheButton=$('#clearCacheButton');
-  if(cacheButton && !silent)cacheButton.disabled=true;
   const btn=$('#refreshButton');
   if(btn && !silent){btn.disabled=true;btn.classList.add('loading');}
   const sStatus=$('#sourceStatus');
@@ -6955,7 +6926,6 @@ async function refresh({notify=false,silent=false}={}){
   }finally{
     refreshInProgress=false;
     await scheduleNextRefresh();
-    if(cacheButton)cacheButton.disabled=false;
     if(btn){btn.disabled=false;btn.classList.remove('loading');}
   }
 }
@@ -7174,8 +7144,6 @@ Promise.all([
 ]).then(async()=>{
   startupDataReady = true;
   preloadGameCovers();
-  const cacheButton=$('#clearCacheButton');
-  if(cacheButton)cacheButton.disabled=false;
   await scheduleNextRefresh();
   render();
 });
