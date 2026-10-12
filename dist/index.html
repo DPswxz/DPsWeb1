@@ -1,17 +1,18 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta name="game-pulse-version" content="dfdcd31ba14ef1bbd0be" />
+  <meta name="game-pulse-version" content="a426671a860f6ba4c00f" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#071014" />
+  <meta name="theme-color" content="#101822" />
   <meta name="description" content="追踪 Nintendo Switch 日服与港服、Steam 热销榜及 PlayStation 商店价格。" />
   <title>GAME PULSE · 游戏价格观测站</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23071014'/%3E%3Cpath d='M7 12h18l2 10-5 2-3-4h-6l-3 4-5-2z' fill='%238ef0d4'/%3E%3Cpath d='M10 15v4m-2-2h4' stroke='%23071014' stroke-width='1.8'/%3E%3Ccircle cx='22' cy='16' r='1.2' fill='%23071014'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="styles.css?v=dfdcd31ba14ef1bbd0be" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg?v=a426671a860f6ba4c00f" />
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("game-pulse-theme")==="green"?"green":"blue"}catch{}</script>
+  <link rel="stylesheet" href="styles.css?v=a426671a860f6ba4c00f" />
 </head>
 <body>
   <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
@@ -20,7 +21,13 @@
       <span class="brand-mark"><i></i><i></i></span>
       <span>GAME <b>PULSE</b></span>
     </a>
-    <button type="button" id="clearCacheButton" class="refresh-button" style="margin-left:auto" title="清除本机榜单、封面和汇率缓存，并重新加载数据" disabled>清除缓存</button>
+    <div class="theme-control">
+      <button type="button" class="theme-button" id="themeButton" aria-haspopup="menu" aria-controls="themeMenu" aria-expanded="false"><svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18Z" fill="currentColor" stroke="none"/></svg><span>主题色</span></button>
+      <div class="theme-menu" id="themeMenu" role="menu" aria-label="选择主题色" hidden>
+        <button type="button" role="menuitemradio" data-theme="blue" aria-checked="true"><span class="theme-dot" style="--swatch:#66c0f4" aria-hidden="true"></span>蓝色</button>
+        <button type="button" role="menuitemradio" data-theme="green" aria-checked="false"><span class="theme-dot" style="--swatch:#8ef0d4" aria-hidden="true"></span>绿色</button>
+      </div>
+    </div>
   </header>
 
   <main class="shell">
@@ -94,7 +101,7 @@
             <span>仅看折扣</span>
             <span id="dealBadge" class="deal-count-badge">0</span>
           </button>
-          <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="搜索原名 / 译名…" aria-label="搜索游戏原名或译名" autocomplete="off" /></label>
+          <label class="search"><svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5" stroke-linecap="round"/></svg><input id="searchInput" type="search" placeholder="搜索原名 / 译名…" aria-label="搜索游戏原名或译名" autocomplete="off" /></label>
           <select id="sortSelect" aria-label="排序方式">
             <option value="rank">按排名</option>
             <option value="priceAsc">价格从低到高</option>
@@ -181,7 +188,7 @@
           </ul>
           <p>Nintendo 日服/港服、PlayStation 港服/日服及 Steam 榜单均来自官方商店。Steam 全球榜使用全球排名和中国区参考价。</p>
         </article>
-        <button type="button" id="gameArchiveButton" class="archive-launch" aria-haspopup="dialog" aria-controls="gameArchiveModal" title="查看曾进入榜单的所有游戏">打开游戏档案 ↗</button>
+        <button type="button" id="gameArchiveButton" class="archive-launch" aria-haspopup="dialog" aria-controls="gameArchiveModal" title="查看曾进入榜单的所有游戏"><svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1.5"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8M9 12h6" stroke-linecap="round"/></svg><span>打开游戏档案</span><span class="button-external" aria-hidden="true">↗</span></button>
 
   <footer class="site-credit" aria-label="网站技术与支持">
     <span>Powered by <a href="https://www.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare</a></span>
@@ -289,15 +296,16 @@
     </section>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"><span>✓</span><div><b>刷新完成</b><small></small></div></div>
-  <script src="config.js?v=dfdcd31ba14ef1bbd0be"></script>
-  <script src="nintendo-data.js?v=dfdcd31ba14ef1bbd0be"></script>
-  <script src="ps5-data.js?v=dfdcd31ba14ef1bbd0be"></script>
-  <script src="ps5-jp-data.js?v=dfdcd31ba14ef1bbd0be"></script>
-  <script src="steam-data.js?v=dfdcd31ba14ef1bbd0be"></script>
-  <script src="steam-global-data.js?v=dfdcd31ba14ef1bbd0be"></script>
-  <script src="update-client.js?v=dfdcd31ba14ef1bbd0be"></script>
-  <script src="cover-cache.js?v=dfdcd31ba14ef1bbd0be"></script>
-  <script src="app.js?v=dfdcd31ba14ef1bbd0be"></script>
-  <script src="archive.js?v=dfdcd31ba14ef1bbd0be"></script>
+  <script src="config.js?v=a426671a860f6ba4c00f"></script>
+  <script src="nintendo-data.js?v=a426671a860f6ba4c00f"></script>
+  <script src="ps5-data.js?v=a426671a860f6ba4c00f"></script>
+  <script src="ps5-jp-data.js?v=a426671a860f6ba4c00f"></script>
+  <script src="steam-data.js?v=a426671a860f6ba4c00f"></script>
+  <script src="steam-global-data.js?v=a426671a860f6ba4c00f"></script>
+  <script src="update-client.js?v=a426671a860f6ba4c00f"></script>
+  <script src="cover-cache.js?v=a426671a860f6ba4c00f"></script>
+  <script src="app.js?v=a426671a860f6ba4c00f"></script>
+  <script src="archive.js?v=a426671a860f6ba4c00f"></script>
+  <script src="effects.js?v=a426671a860f6ba4c00f"></script>
 </body>
 </html>
