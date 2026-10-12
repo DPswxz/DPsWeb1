@@ -1707,7 +1707,7 @@ const chineseTitleMap = new Proxy({
   "7 Days to Die - 主机版": "7 Days to Die - 主机版",
   "《NHL 27》PS5 豪华版": "NHL 27PS5 豪华版",
   "《NHL 27》PS5 标准版": "NHL 27PS5 标准版",
-  "Kingdom Come: Deliverance": "Kingdom Come: Deliverance",
+  "Kingdom Come: Deliverance": "天国：拯救",
   "Kingdom Come: Deliverance - Royal Edition": "Kingdom Come: Deliverance - Royal Edition",
   "奇异人生：重逢": "奇异人生: 重逢",
   "《奇异人生：重逢》双子包": "奇异人生: 重逢双子包",
@@ -4389,7 +4389,14 @@ const chineseTitleMap = new Proxy({
   "Wizardry: The Five Ordeals Triple Pack": "巫术外传 五重试炼 三合一套装",
   "ペルソナ4 ザ・ゴールデン": "女神异闻录4 黄金版",
   "Persona 4 Golden": "女神异闻录4 黄金版",
-  "ダービースタリオン2": "德贝赛马2"
+  "ダービースタリオン2": "德贝赛马2",
+  "1-2-Switch": "1-2-Switch",
+  "1-2-Switch（ワンツースイッチ）": "1-2-Switch",
+  "1-2-Switch (ワンツースイッチ)": "1-2-Switch",
+  "ゼルダの伝説 知恵のかりもの": "塞尔达传说 智慧的再现",
+  "The Legend of Zelda: Echoes of Wisdom": "塞尔达传说 智慧的再现",
+  "薩爾達傳說 智慧的再現": "塞尔达传说 智慧的再现",
+  "塞尔达传说 智慧的再现": "塞尔达传说 智慧的再现"
 }, {
   normalize(title) {
     return title.replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
@@ -4565,7 +4572,7 @@ const steamProductTitleMap = {
   "steam:3855540": "BLACK SOULS II",
   "steam:1289670": "EA Play",
   "steam:1361210": "战锤40K: 暗潮",
-  "steam:379430": "Kingdom Come: Deliverance",
+  "steam:379430": "天国：拯救",
   "steam:3755860": "BLACK SOULS",
   "steam:1623730": "幻兽帕鲁",
   "steam:1041320": "王国纪元 (Lords Mobile)",

@@ -3661,5 +3661,34 @@
     "cn": "雨中冒险 2",
     "source": "https://store.steampowered.com/app/632360/?l=schinese",
     "kind": "按本体商品ID区分本体与DLC套装"
+  },
+  {
+    "aliases": [
+      "1-2-Switch",
+      "1-2-Switch（ワンツースイッチ）",
+      "1-2-Switch (ワンツースイッチ)"
+    ],
+    "cn": "1-2-Switch",
+    "source": "用户指定显示名称",
+    "kind": "用户指定译名或保留原名"
+  },
+  {
+    "aliases": [
+      "ゼルダの伝説 知恵のかりもの",
+      "The Legend of Zelda: Echoes of Wisdom",
+      "薩爾達傳說 智慧的再現",
+      "塞尔达传说 智慧的再现"
+    ],
+    "cn": "塞尔达传说 智慧的再现",
+    "source": "用户指定显示名称",
+    "kind": "用户指定译名或保留原名"
+  },
+  {
+    "aliases": [
+      "Kingdom Come: Deliverance"
+    ],
+    "cn": "天国：拯救",
+    "source": "用户指定显示名称",
+    "kind": "用户指定译名或保留原名"
   }
 ]
