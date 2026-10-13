@@ -32,6 +32,13 @@
   const base=(window.GAME_PULSE_CONFIG?.apiBase || location.origin).replace(/\/$/,'');
   const official=new Set(['image.api.playstation.com','shared.fastly.steamstatic.com','shared.st.dl.eccdnx.com','cdn.akamai.steamstatic.com',
     'cdn.cloudflare.steamstatic.com','store-jp.nintendo.com','img-eshop.cdn.nintendo.net','upload.wikimedia.org','store.nintendo.com.hk']);
+  // 代理只是传输方式；同一张官方封面始终使用相同的离线缓存标识。
+  function coverKey(source) {
+    const url=new URL(source,location.href);
+    if(['/api/nintendo/image','/api/covers/image'].includes(url.pathname)&&url.searchParams.get('url'))
+      return new URL(url.searchParams.get('url'),location.href).href;
+    return url.href;
+  }
   function imageEndpoint(source) {
     const url=new URL(source,location.href);
     if(url.pathname==='/api/nintendo/image'&&url.searchParams.get('url'))
@@ -65,7 +72,7 @@
     const value={...record,src:URL.createObjectURL(record.blob)};
     memory.set(record.url,value);
     if(previous)for(const img of document.querySelectorAll('img[data-cover-url]'))
-      if(img.dataset.coverUrl===record.url&&img.getAttribute('src'))img.src=value.src;
+      if(coverKey(img.dataset.coverUrl)===record.url&&img.getAttribute('src'))img.src=value.src;
     if(previous) URL.revokeObjectURL(previous.src);
     return value;
   }
@@ -93,6 +100,8 @@
     enqueue(()=>epoch===generation?download(url,record,epoch):null).catch(()=>{record.retryAt=Date.now()+3600000;}).finally(()=>checking.delete(url));
   }
   async function get(url,{priority=true,early=false,dialog=false}={}) {
+    const source=url;
+    url=coverKey(url);
     const cached=memory.get(url);if(cached){recheck(url,cached);return cached.src;}
     if(pending.has(url)){
       const task=pending.get(url);task.early ||= early;
@@ -108,7 +117,18 @@
     const task=(async()=>{
       if(epoch!==generation)throw new Error('Cache cleared');
       // 少数浏览器的本地数据库可能迟迟没有响应，不能拖住本页封面。
-      const record=await Promise.race([read(url).catch(()=>null),new Promise(resolve=>setTimeout(()=>resolve(null),500))]);
+      const diskRead=(async()=>{
+        let record=await read(url);
+        if(!record?.blob){
+          const aliases=new Set([source,`${base}/api/covers/image?url=${encodeURIComponent(url)}`]);
+          if(new URL(url).hostname==='store.nintendo.com.hk')aliases.add(`${base}/api/nintendo/image?url=${encodeURIComponent(url)}`);
+          aliases.delete(url);
+          for(const alias of aliases){record=await read(alias);if(record?.blob)break;}
+        }
+        if(record?.blob&&record.url!==url){record={...record,url};write(record,epoch).catch(()=>{});}
+        return record;
+      })();
+      const record=await Promise.race([diskRead.catch(()=>null),new Promise(resolve=>setTimeout(()=>resolve(null),500))]);
       if(epoch!==generation)throw new Error('Cache cleared');
       if(record?.blob){const value=publish(record);recheck(url,value);return value.src;}
       task.downloadTask=enqueue(()=>download(url,null,epoch),task.priority,task.early,task.dialog);
@@ -119,7 +139,7 @@
   }
   let preloadTimer;
   function preload(urls){
-    const unique=[...new Set(urls.filter(Boolean))];
+    const unique=[...new Set(urls.filter(Boolean).map(coverKey))];
     clearTimeout(preloadTimer);
     const epoch=generation;
     preloadTimer=setTimeout(()=>{
@@ -140,8 +160,8 @@
     for(const img of images)if(!bound.has(img)){
       bound.add(img);
       img.loading='eager';
-      const cached=memory.get(img.dataset.coverUrl);
-      if(cached){img.src=cached.src;recheck(img.dataset.coverUrl,cached);}
+      const key=coverKey(img.dataset.coverUrl),cached=memory.get(key);
+      if(cached){img.src=cached.src;recheck(key,cached);}
       else load(img,true);
     }
   }

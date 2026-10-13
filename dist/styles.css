@@ -576,3 +576,66 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background-im
 @media(max-width:760px){.toolbar-inner .tools .deal-filter-btn{height:36px;min-height:36px;font-size:12px;padding:0 8px;gap:5px}.toolbar-inner .tools .search,.toolbar-inner .tools .sort-trigger{height:38px;min-height:38px}.toolbar-inner .tools .sort-picker{grid-column:3;grid-row:2;min-width:112px;width:100%}.toolbar-inner.no-free-games .tools .sort-picker{grid-column:2}.tools .search input{font-size:16px}.tools .sort-trigger{font-size:12px}.tools .deal-count-badge{height:18px;min-width:18px;line-height:18px;font-size:11px}.toolbar-inner{row-gap:10px}}
 
 .topbar .theme-control{margin-left:auto}.theme-button,.archive-launch{display:inline-flex;align-items:center;justify-content:center;gap:9px}.button-icon{width:18px;height:18px;flex:none;display:block}.archive-launch .button-icon{width:20px;height:20px}.button-external{font-size:15px;line-height:1}
+
+@media(min-width:561px){
+/* 主榜按容器宽度逐列隐藏：平台 → 链接 → 历史价格；游戏和价格始终保留。 */
+.table-card{container-type:inline-size;min-width:0}.table-card>.table-scroll{overflow:visible}.table-card>.table-scroll>table{display:table!important;width:100%;min-width:0!important;table-layout:fixed}
+.table-card>.table-scroll>table>thead{display:table-header-group!important}.table-card #gameRows{display:table-row-group!important}
+.table-card>.table-scroll>table>thead>tr,.table-card #gameRows>tr:not(.edition-drawer-row){display:table-row!important;padding:0!important}
+.table-card>.table-scroll>table>thead>tr>th,.table-card #gameRows>tr:not(.edition-drawer-row)>td{display:table-cell!important;padding:14px 10px!important;vertical-align:middle;min-width:0;overflow-wrap:anywhere}
+.table-card>.table-scroll>table>thead>tr>th:first-child{width:46px}.table-card>.table-scroll>table>thead>tr>th:nth-child(3){width:78px}.table-card>.table-scroll>table>thead>tr>th:nth-child(4){width:120px;text-align:left}.table-card>.table-scroll>table>thead>tr>th.col-history{width:136px}.table-card>.table-scroll>table>thead>tr>th:last-child{width:50px}
+#gameRows>tr:not(.edition-drawer-row) .game-cell{display:flex!important;align-items:center!important;gap:12px!important;min-width:0}#gameRows>tr:not(.edition-drawer-row) .wide-cover-left{display:contents!important}#gameRows>tr:not(.edition-drawer-row) .game-copy{display:flex!important;flex-direction:column;min-width:0;flex:1}#gameRows>tr:not(.edition-drawer-row) .game-name,#gameRows>tr:not(.edition-drawer-row) .game-original{max-width:100%;overflow-wrap:anywhere}#gameRows>tr:not(.edition-drawer-row) .cover{width:64px!important;height:64px!important;flex:none}#gameRows>tr:not(.edition-drawer-row) .cover.steam-cover{width:100px!important;height:38px!important}#gameRows>tr:not(.edition-drawer-row) .cover.hk-cover{width:96px!important;height:54px!important}
+#gameRows .mobile-game-price,#gameRows .mobile-game-actions,#gameRows .mobile-wide-side{display:none!important}
+@container(max-width:900px){.table-card>.table-scroll>table>thead>tr>th:nth-child(3),.table-card #gameRows>tr:not(.edition-drawer-row)>td:nth-child(3){display:none!important}}
+@container(max-width:760px){.table-card>.table-scroll>table>thead>tr>th:last-child,.table-card #gameRows>tr:not(.edition-drawer-row)>td:last-child{display:none!important}}
+@container(max-width:600px){.table-card>.table-scroll>table>thead>tr>th.col-history,.table-card #gameRows>tr:not(.edition-drawer-row)>td:nth-child(5):not(:last-child){display:none!important}#gameRows>tr:not(.edition-drawer-row) .cover{width:48px!important;height:48px!important}#gameRows>tr:not(.edition-drawer-row) .cover.steam-cover{width:72px!important;height:27px!important}#gameRows>tr:not(.edition-drawer-row) .cover.hk-cover{width:64px!important;height:36px!important}.table-card>.table-scroll>table>thead>tr>th:nth-child(4){width:108px}}
+@container(max-width:400px){.table-card>.table-scroll>table>thead>tr>th:first-child,.table-card #gameRows>tr:not(.edition-drawer-row)>td:first-child{display:none!important}.table-card>.table-scroll>table>thead>tr>th,.table-card #gameRows>tr:not(.edition-drawer-row)>td{padding:12px 8px!important}#gameRows>tr:not(.edition-drawer-row) .cover{display:none!important}.table-card>.table-scroll>table>thead>tr>th:nth-child(4){width:98px}}
+.table-card>.table-scroll>table>thead>tr>th[hidden]{display:none!important}
+
+/* 侧栏转为下方时，不让已经隐藏的低优先级列重新出现。 */
+@media(max-width:1250px){.table-card>.table-scroll>table>thead>tr>th:nth-child(3),.table-card #gameRows>tr:not(.edition-drawer-row)>td:nth-child(3){display:none!important}}
+@media(max-width:1100px){.table-card>.table-scroll>table>thead>tr>th:last-child,.table-card #gameRows>tr:not(.edition-drawer-row)>td:last-child{display:none!important}}
+
+}
+.link-icon{display:inline-block;width:16px;height:16px;flex:none;vertical-align:-3px}.source-external,.site-credit a,.mobile-game-actions a{display:inline-flex;align-items:center;justify-content:center;gap:5px}.source-external .link-icon{width:13px;height:13px}.store-link .link-icon{width:18px;height:18px}.spark-hint .link-icon{width:11px;height:11px;vertical-align:-2px}.button-external{display:inline-flex;align-items:center}
+
+/* 桌面和中等宽度保留大内容；只在手机宽度使用紧凑尺寸。 */
+@media(min-width:561px){
+#gameRows>tr:not(.edition-drawer-row) .cover,#gameRows>tr:not(.edition-drawer-row) .cover.ps-cover{display:flex!important;width:116px!important;height:116px!important;border-radius:10px}
+#gameRows>tr:not(.edition-drawer-row) .cover.steam-cover{width:212px!important;height:80px!important}
+#gameRows>tr:not(.edition-drawer-row) .cover.hk-cover{width:206px!important;height:116px!important}
+#gameRows>tr:not(.edition-drawer-row) .game-cell{gap:20px!important}
+#gameRows>tr:not(.edition-drawer-row) .game-name{font-size:17px!important;line-height:1.4!important;-webkit-line-clamp:2}
+#gameRows>tr:not(.edition-drawer-row) .game-original{font-size:12px!important;line-height:1.4!important;-webkit-line-clamp:2}
+#gameRows>tr:not(.edition-drawer-row) .price-main{font-size:17px!important}
+#gameRows>tr:not(.edition-drawer-row) .edition-badge,#gameRows>tr:not(.edition-drawer-row) .lang-chip{font-size:11px;padding:3px 6px}
+.table-card #gameRows>tr:not(.edition-drawer-row)>td{padding:18px 12px!important}
+}
+@media(max-width:560px){#gameRows>tr:not(.edition-drawer-row) .game-name{font-size:13px;line-height:1.4}#gameRows>tr:not(.edition-drawer-row) .price-main{font-size:14px}}
+
+/* 序号保持完整，避免固定表格布局挤成两行。 */
+@media(min-width:561px){.table-card>.table-scroll>table>thead>tr>th:first-child{width:62px;white-space:nowrap}}
+.table-card #gameRows>tr:not(.edition-drawer-row)>td:first-child{white-space:nowrap;overflow-wrap:normal;word-break:normal}
+#gameRows .rank{display:inline-block;white-space:nowrap;overflow-wrap:normal;word-break:normal;font-variant-numeric:tabular-nums;line-height:1.2}
+
+/* 各手机宽度连续适配，价格不能被旧的最小宽度挤出单元格。 */
+.table-card #gameRows .price-stack{min-width:0;max-width:100%}
+.table-card #gameRows .price-cny,.table-card #gameRows .price-old{max-width:100%;overflow-wrap:anywhere;white-space:normal}
+@media(min-width:561px){.table-card>.table-scroll>table>thead>tr>th:nth-child(4){width:140px}}
+
+/* 封面悬停独立于桌面/手机排版，避免布局规则影响动画。 */
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+#gameRows .cover{transition:transform .25s ease,box-shadow .25s ease!important;transform-origin:center}
+#gameRows>tr:hover .cover,#gameRows .cover:hover{transform:translateY(-5px) rotate(-2deg) scale(1.025)!important;box-shadow:0 12px 28px rgba(0,0,0,.35)!important}
+}
+@media(prefers-reduced-motion:reduce){#gameRows .cover{transform:none!important;transition:none!important}}
+
+/* 桌面辅助列随表格宽度适当伸展，商店按钮保留完整的右侧留白。 */
+@media(min-width:561px){
+.table-card>.table-scroll>table>thead>tr>th:nth-child(3){width:clamp(88px,8cqw,112px)}
+.table-card>.table-scroll>table>thead>tr>th:nth-child(4){width:clamp(140px,14cqw,200px)}
+.table-card>.table-scroll>table>thead>tr>th.col-history{width:clamp(136px,13cqw,184px)}
+.table-card>.table-scroll>table>thead>tr>th:last-child{width:84px}
+.table-card>.table-scroll>table>thead>tr>th:last-child,.table-card #gameRows>tr:not(.edition-drawer-row)>td:last-child{padding-left:12px!important;padding-right:24px!important;text-align:center}
+.table-card #gameRows>tr:not(.edition-drawer-row)>td:nth-child(3),.table-card #gameRows>tr:not(.edition-drawer-row)>td:nth-child(5):not(:last-child){text-align:left}
+}
