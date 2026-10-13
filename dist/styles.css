@@ -639,3 +639,13 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background-im
 .table-card>.table-scroll>table>thead>tr>th:last-child,.table-card #gameRows>tr:not(.edition-drawer-row)>td:last-child{padding-left:12px!important;padding-right:24px!important;text-align:center}
 .table-card #gameRows>tr:not(.edition-drawer-row)>td:nth-child(3),.table-card #gameRows>tr:not(.edition-drawer-row)>td:nth-child(5):not(:last-child){text-align:left}
 }
+
+/* 排序和档案筛选共用同一套下拉按钮与菜单。 */
+.sort-trigger,.tools .sort-trigger{background:var(--panel2);border-color:var(--line);font-weight:600}
+.sort-options{background:var(--panel2);border-color:var(--line);max-height:min(320px,50dvh);overflow-y:auto;overscroll-behavior:contain}
+.sort-picker:has(.sort-trigger[aria-expanded="true"]){z-index:10}
+.archive-filters .sort-picker{min-width:0;width:100%}
+.archive-filters .sort-trigger{min-height:40px;gap:10px;font-size:13px}
+.archive-filters .sort-options{min-width:100%;width:max-content;max-width:min(260px,calc(100vw - 48px));right:0;left:auto}
+select[hidden]{display:none!important}
+@media(max-width:760px){.archive-filters .sort-trigger{min-height:42px;font-size:13px}}

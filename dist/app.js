@@ -6691,7 +6691,7 @@ function render(){
     : (isPs4View ? (datasets.ps4 || []) : isPs ? (state.includePs4 ? (datasets.ps5_with_ps4 || datasets.ps5 || []) : (datasets.ps5 || [])) : (datasets[isNintendo ? activeNintendoKey() : state.platform] || []));
   const platformGames = all;
   const paidGames = platformGames.filter(x => Number(x.price) > 0 && !x.isFree);
-  const freeGames = platformGames.filter(x => x.hasFreeEdition || Number(x.price) === 0 || x.isFree);
+  const freeGames = platformGames.filter(x => x.hasFreeEdition || x.isFree || (x.price != null && Number(x.price) === 0));
   const deals = paidGames.filter(x => x.discount > 0).sort((a,b) => b.discount - a.discount);
   if (!freeGames.length && state.view === 'free') { state.view = 'ranking'; state.page = 1; }
   $('.toolbar-inner')?.classList.toggle('no-free-games', freeGames.length === 0);
@@ -6730,7 +6730,7 @@ function render(){
   if (pageNext) pageNext.disabled = state.page >= state.pageTotal;
   const ranking = nintendoStatus[activeNintendoKey()];
   const steamActiveStatus = state.steamRegion === 'global' ? steamGlobalStatus : steamStatus;
-  const capacity = isPs ? paidGames.length : isNintendo ? (ranking?.officialLimit || all.length || 50) : (steamActiveStatus?.officialLimit || all.length || 200);
+  const capacity = isPs ? paidGames.length : state.platform === 'steam' ? platformGames.filter(x=>!x.isFree).length : isNintendo ? (ranking?.officialLimit || all.length || 50) : (steamActiveStatus?.officialLimit || all.length || 200);
   const rowsHtml=data.map(renderRow).join('');
   const gameRows=$('#gameRows');
   if(gameRows.renderedHtml!==rowsHtml){gameRows.innerHTML=rowsHtml;gameRows.renderedHtml=rowsHtml;}
@@ -6767,13 +6767,13 @@ function render(){
   if ($('#freeBadge')) $('#freeBadge').textContent = freeGames.length;
 
   if (state.view === 'free') {
-    $('#gameCount').textContent = String(isPs ? capacity : freeGames.length);
+    $('#gameCount').textContent = String(isPs || state.platform === 'steam' ? capacity : freeGames.length);
     $('#resultSummary').textContent = `显示 ${pageStart}-${pageEnd} / ${state.filteredCount} 款免费游戏`;
   } else if (state.view === 'deals') {
-    $('#gameCount').textContent = String(isPs ? capacity : deals.length);
+    $('#gameCount').textContent = String(isPs || state.platform === 'steam' ? capacity : deals.length);
     $('#resultSummary').textContent = isJp ? `显示 ${pageStart}-${pageEnd} / ${state.filteredCount} 款日服特惠游戏` : isHk || isNintendoHk() ? `显示 ${pageStart}-${pageEnd} / ${state.filteredCount} 款港服特惠游戏` : `显示 ${pageStart}-${pageEnd} / ${state.filteredCount} 款折扣游戏`;
   } else if (state.view === 'ps4') {
-    $('#gameCount').textContent = String(isPs ? capacity : data.length);
+    $('#gameCount').textContent = String(isPs || state.platform === 'steam' ? capacity : data.length);
     $('#resultSummary').textContent = `显示 ${pageStart}-${pageEnd} / ${state.filteredCount} 款仅支持 PS4 游戏`;
   } else {
     $('#gameCount').textContent = String(capacity);
@@ -6814,7 +6814,7 @@ function render(){
   } else if (state.view === 'deals') {
     $('#tableTitle').textContent = isJp ? (state.includePs4 ? 'PS5 & PS4 特惠折扣' : 'PS5 特惠折扣') : isHk ? (state.includePs4 ? 'PS5 & PS4 特惠折扣' : 'PS5 特惠折扣') : steam ? 'Steam 特惠折扣榜' : `Switch ${state.nintendoStore === 'hk' ? '港服' : '日服'}特惠折扣榜`;
   } else {
-    $('#tableTitle').textContent = isJp ? (state.includePs4 ? 'PS5 & PS4 日服商店浏览列表' : 'PS5 日服商店浏览列表') : isHk ? (state.includePs4 ? 'PS5 & PS4 港服商店浏览列表' : 'PS5 港服商店浏览列表') : steam ? (state.steamRegion==='global'?'Steam 全球热销榜 · 前 100':'Steam 中国区热销榜 · 前 200') : `Switch ${state.platform === 'switch2' ? '2' : '1'} ${state.nintendoStore === 'hk' ? '港服' : '日服'}网页排行榜 · ${all.length} 条`;
+    $('#tableTitle').textContent = isJp ? (state.includePs4 ? 'PS5 & PS4 日服商店浏览列表' : 'PS5 日服商店浏览列表') : isHk ? (state.includePs4 ? 'PS5 & PS4 港服商店浏览列表' : 'PS5 港服商店浏览列表') : steam ? (state.steamRegion==='global'?'Steam 全球热销榜 · 付费前 200':'Steam 中国区热销榜 · 付费前 200') : `Switch ${state.platform === 'switch2' ? '2' : '1'} ${state.nintendoStore === 'hk' ? '港服' : '日服'}网页排行榜 · ${all.length} 条`;
   }
 
   $('#regionPill').textContent = isHk || isNintendoHk() ? 'HK · HKD → CNY' : (isJp || isNintendo) ? 'JP · JPY → CNY' : steam && state.steamRegion==='global' ? 'GLOBAL · 中国区参考价' : 'CN · CNY';
