@@ -45,8 +45,8 @@
     });
   }
   // 保留原 select 的事件接口，用自定义菜单呈现交互。
-  const select = document.querySelector('#sortSelect');
-  if (select) {
+  for (const select of document.querySelectorAll('select')) {
+    const label = select.getAttribute('aria-label') || '选择';
     const wrapper = document.createElement('div');
     wrapper.className = 'sort-picker';
     const trigger = document.createElement('button');
@@ -54,20 +54,24 @@
     trigger.className = 'sort-trigger';
     trigger.setAttribute('aria-haspopup', 'listbox');
     trigger.setAttribute('aria-expanded', 'false');
-    trigger.setAttribute('aria-controls', 'sortOptions');
+    trigger.setAttribute('aria-controls', `${select.id}Options`);
     const menu = document.createElement('div');
-    menu.id = 'sortOptions';
+    menu.id = `${select.id}Options`;
     menu.className = 'sort-options';
     menu.setAttribute('role', 'listbox');
-    menu.setAttribute('aria-label', '排序方式');
+    menu.setAttribute('aria-label', label);
     menu.hidden = true;
     let active = 0;
-    const options = [...select.options].map((option, index) => {
+    let options = [];
+    const rebuild = () => {
+    menu.replaceChildren();
+    options = [...select.options].map((option, index) => {
       const button = document.createElement('div');
-      button.id = `sortOption${index}`;
+      button.id = `${select.id}Option${index}`;
       button.className = 'sort-option';
       button.setAttribute('role', 'option');
       button.textContent = option.textContent;
+      button.addEventListener('pointerdown', event => event.preventDefault());
       button.addEventListener('click', () => {
         select.value = option.value;
         select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -77,14 +81,18 @@
       menu.append(button);
       return button;
     });
+    close();
+    update();
+    };
     const highlight = index => {
       active = (index + options.length) % options.length;
       options.forEach((option, i) => option.classList.toggle('is-active', i === active));
       trigger.setAttribute('aria-activedescendant', options[active].id);
+      options[active].scrollIntoView({block:'nearest'});
     };
     const update = () => {
       trigger.textContent = select.selectedOptions[0]?.textContent || '';
-      trigger.setAttribute('aria-label', `排序方式：${trigger.textContent}`);
+      trigger.setAttribute('aria-label', `${label}：${trigger.textContent}`);
       options.forEach((option, i) => option.setAttribute('aria-selected', String(i === select.selectedIndex)));
     };
     const close = () => {
@@ -93,6 +101,7 @@
       trigger.removeAttribute('aria-activedescendant');
     };
     const open = () => {
+      document.dispatchEvent(new CustomEvent('dropdown-open', {detail:wrapper}));
       menu.hidden = false;
       trigger.setAttribute('aria-expanded', 'true');
       highlight(select.selectedIndex);
@@ -106,15 +115,18 @@
       } else if ((event.key === 'Enter' || event.key === ' ') && !menu.hidden) {
         event.preventDefault();
         options[active].click();
-      } else if (event.key === 'Escape') close();
+      } else if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); }
       else if (event.key === 'Tab') close();
     });
     document.addEventListener('click', event => { if (!wrapper.contains(event.target)) close(); });
+    document.addEventListener('dropdown-open', event => { if(event.detail!==wrapper) close(); });
+    wrapper.addEventListener('focusout', event => { if(!wrapper.contains(event.relatedTarget)) close(); });
     select.addEventListener('change', update);
     select.before(wrapper);
     wrapper.append(trigger, menu);
     select.hidden = true;
-    update();
+    rebuild();
+    new MutationObserver(rebuild).observe(select,{childList:true,subtree:true,attributes:true});
   }
   let frame = 0;
   let pending = null;

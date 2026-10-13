@@ -69,7 +69,7 @@
   rows.addEventListener('click',event=>{const target=event.target.closest('[data-archive-index]');if(target&&!target.disabled){const game=games[Number(target.dataset.archiveIndex)];if(game)openPriceModal(game);}});
   modal.addEventListener('keydown',event=>{
     if(event.key!=='Tab'||!document.querySelector('#priceHistoryModal').hidden)return;
-    const controls=[...modal.querySelectorAll('button:not(:disabled),input,select')],first=controls[0],last=controls.at(-1);
+    const controls=[...modal.querySelectorAll('button:not(:disabled),input,select')].filter(control=>control.getClientRects().length),first=controls[0],last=controls.at(-1);
     if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
     else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
   });

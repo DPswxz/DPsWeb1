@@ -2,6 +2,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { storeFetch } from './polite-fetch.mjs';
 import { load } from 'cheerio';
+import { collectSteamRanking } from './steam-ranking.mjs';
 
 const CHART_URL = 'https://store.steampowered.com/charts/topselling/global?l=english';
 const COLORS = ['#1b5f82', '#2a475e', '#1976d2', '#0097a7', '#00796b', '#388e3c', '#512da8', '#c2185b'];
@@ -65,10 +66,7 @@ export class SteamGlobalCollector {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000);
     try {
-      const response = await storeFetch(CHART_URL, { signal: controller.signal });
-      if (!response.ok) throw new Error(`Steam 全球榜返回 HTTP ${response.status}`);
-      const chart = parseGlobalChart(await response.text());
-      if (chart.length < 50) throw new Error(`Steam 全球榜仅解析到 ${chart.length} 条`);
+      const chart = await collectSteamRanking({global:true,signal:controller.signal});
 
       const prices = new Map();
       const paidIds = chart.filter(game => !game.isFree).map(game => game.id);
@@ -107,9 +105,9 @@ export class SteamGlobalCollector {
       this.cache = {
         platform: 'steam_global',
         label: 'Steam 全球热销榜',
-        source: CHART_URL,
-        sourceType: 'Steam 官方全球排名 · 中国区价格',
-        officialLimit: chart.length,
+        source: 'https://store.steampowered.com/search/?filter=globaltopsellers',
+        sourceType: '全球热销前200款付费 + 综合前200名免费 · 中国区参考价',
+        officialLimit: 200,
         count: games.length,
         updatedAt: new Date().toISOString(),
         stale: false,
