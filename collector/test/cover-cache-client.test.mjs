@@ -57,3 +57,22 @@ test('主榜四个慢请求不会堵住档案弹窗封面，已排队的图片�
  assert.match(src,/^blob:/);assert.equal(await queued,src);
  waiting.forEach(finish=>finish());await Promise.all(main);
 });
+
+test('港服官方地址缓存可通过代理地址离线显示，跨代理来源共用缓存',async()=>{
+ const url='https://store.nintendo.com.hk/media/catalog/product/game.jpg';
+ const img={dataset:{coverUrl:`https://radar.test/api/nintendo/image?url=${encodeURIComponent(url)}`},isConnected:true,closest:()=>null};
+ let calls=0;
+ const {cache}=client([{url,blob:new Blob(['hk']),checkedAt:Date.now()}],async()=>{calls++;throw Error('Offline');},{images:[img]});
+ const src=await cache.get(`https://old.test/api/covers/image?url=${encodeURIComponent(url)}`);
+ for(let i=0;i<50&&!img.src;i++)await pause(5);
+ assert.equal(img.src,src);assert.match(src,/^blob:/);assert.equal(calls,0);
+});
+
+test('旧版港服代理缓存离线迁移到官方地址，后续读取不依赖代理',async()=>{
+ const url='https://store.nintendo.com.hk/media/catalog/product/legacy.jpg';
+ const proxy=`https://radar.test/api/nintendo/image?url=${encodeURIComponent(url)}`;
+ let calls=0;
+ const {cache,data}=client([{url:proxy,blob:new Blob(['legacy']),checkedAt:Date.now()}],async()=>{calls++;throw Error('Offline');});
+ const src=await cache.get(url);
+ assert.equal(await cache.get(proxy),src);assert.ok(data.has(url));assert.equal(calls,0);
+});

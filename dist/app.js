@@ -6132,7 +6132,7 @@ function trendCell(g) {
     <div class="spark-cell" data-id="${escapeHtml(g.id || '')}" data-game="${escapeHtml(g.name)}" title="最近6个月走势 · 点击查看历史价格与记录">
       <div class="spark-meta">
         ${trendPill}
-        <span class="spark-hint">走势 ↗</span>
+        <span class="spark-hint">走势</span>
       </div>
       ${sparkSvg}
     </div>
@@ -6508,7 +6508,7 @@ function groupPriceCell(g) {
 
 function mobileGameActions(g,{hidePlatform=false,platformLabels='',leadingDiscount=false}={}) {
   const url = g.url || (isPsJp() ? 'https://store.playstation.com/ja-jp/pages/browse' : isPsHk() ? 'https://store.playstation.com/zh-hant-hk/pages/browse' : 'https://store-jp.nintendo.com/software/ranking/');
-  return `<span class="mobile-game-actions">${leadingDiscount && g.discount ? `<span class="deal-chip">-${g.discount}%</span>` : ''}${hidePlatform ? '' : `<span class="mobile-platform-line"><span class="mobile-platform">${escapeHtml(g.platform || '')}</span>${platformLabels}</span>`}<a href="${escapeHtml(url)}" target="_blank" rel="noopener" aria-label="前往官方商店">商店 ↗</a>${state.view === 'free' ? '' : trendCell(g.primaryGame || g)}</span>`;
+  return `<span class="mobile-game-actions">${leadingDiscount && g.discount ? `<span class="deal-chip">-${g.discount}%</span>` : ''}${hidePlatform ? '' : `<span class="mobile-platform-line"><span class="mobile-platform">${escapeHtml(g.platform || '')}</span>${platformLabels}</span>`}<a href="${escapeHtml(url)}" target="_blank" rel="noopener" aria-label="前往官方商店">商店 <svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7M14 11a5 5 0 0 0-7.1 0l-3 3a5 5 0 0 0 7.1 7.1l1.7-1.7"/></svg></a>${state.view === 'free' ? '' : trendCell(g.primaryGame || g)}</span>`;
 }
 
 function mobileWideSide(g) {
@@ -6551,7 +6551,7 @@ function renderRow(g) {
         <td><span class="platform-chip">${g.platform}</span></td>
         <td>${groupPriceCell(g)}</td>
         ${!isFreeView ? `<td>${trendCell(g.primaryGame || g)}</td>` : ''}
-        <td><a class="store-link" href="${g.url}" target="_blank" rel="noopener" aria-label="前往官方商店">↗</a></td>
+        <td><a class="store-link" href="${g.url}" target="_blank" rel="noopener" aria-label="前往官方商店"><svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7M14 11a5 5 0 0 0-7.1 0l-3 3a5 5 0 0 0 7.1 7.1l1.7-1.7"/></svg></a></td>
       </tr>
       <tr id="drawer-${g.groupId}" class="edition-drawer-row" hidden>
         <td colspan="${isFreeView ? 5 : 6}" class="edition-drawer-cell">
@@ -6584,7 +6584,7 @@ function renderRow(g) {
                     <td><span class="platform-chip">${e.platform}</span></td>
                     <td>${priceCell(e)}</td>
                     ${!isFreeView ? `<td>${trendCell(e)}</td>` : ''}
-                    <td><a class="store-link" href="${e.url}" target="_blank" rel="noopener" aria-label="前往官方商店">↗</a></td>
+                    <td><a class="store-link" href="${e.url}" target="_blank" rel="noopener" aria-label="前往官方商店"><svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7M14 11a5 5 0 0 0-7.1 0l-3 3a5 5 0 0 0 7.1 7.1l1.7-1.7"/></svg></a></td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -6627,7 +6627,7 @@ function renderRow(g) {
       <td><span class="platform-chip ${g.platform === 'PS4' ? 'ps4-chip' : ''}">${g.platform}</span></td>
       <td>${priceCell(g)}</td>
       ${!isFreeView ? `<td>${trendCell(g)}</td>` : ''}
-      <td><a class="store-link" href="${g.url||(isPsJp()?'https://store.playstation.com/ja-jp/pages/browse':isPsHk()?'https://store.playstation.com/zh-hant-hk/pages/browse':'https://store-jp.nintendo.com/software/ranking/')}" target="_blank" rel="noopener" aria-label="前往官方商店">↗</a></td>
+      <td><a class="store-link" href="${g.url||(isPsJp()?'https://store.playstation.com/ja-jp/pages/browse':isPsHk()?'https://store.playstation.com/zh-hant-hk/pages/browse':'https://store-jp.nintendo.com/software/ranking/')}" target="_blank" rel="noopener" aria-label="前往官方商店"><svg class="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1 0l3-3a5 5 0 0 0-7.1-7.1l-1.7 1.7M14 11a5 5 0 0 0-7.1 0l-3 3a5 5 0 0 0 7.1 7.1l1.7-1.7"/></svg></a></td>
     </tr>
   `;
 }

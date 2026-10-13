@@ -37,7 +37,7 @@
           <div class="archive-copy"><strong title="${escapeHtml(title)}">${escapeHtml(title)}</strong>${original}
             <span class="archive-meta">${escapeHtml(labels[game.historyPlatform]||game.historyPlatform)} · <span class="${game.inRanking?'archive-current':''}">${game.inRanking?'在榜':'已退榜'}</span></span>
             <small>建档 ${formatSourceTime(game.firstSeen)} · 最后记录 ${formatSourceTime(game.lastSeen)}</small></div>
-          <div class="archive-price"><small>最近记录</small><b>${escapeHtml(gameRecordMoney(game,game.price))}</b><button type="button" data-archive-index="${index}" ${game.recordCount?'':'disabled'}>${game.recordCount?'走势 ↗':'暂无价格记录'}</button></div></article>`;
+          <div class="archive-price"><small>最近记录</small><b>${escapeHtml(gameRecordMoney(game,game.price))}</b><button type="button" data-archive-index="${index}" ${game.recordCount?'':'disabled'}>${game.recordCount?'走势':'暂无价格记录'}</button></div></article>`;
       }).join(''):'<p class="archive-empty">没有匹配的记录</p>';
       document.querySelector('#archiveSummary').textContent=`共 ${data.total} 条记录`;
       document.querySelector('#archivePage').textContent=`${page} / ${pages}`;
