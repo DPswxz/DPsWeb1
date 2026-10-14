@@ -36,6 +36,18 @@ test('试玩版保留并根据原始名称或商品类型标记Demo，普通免�
   assert.ok(result.find(g=>g.id==='paid').price>0);
 });
 
+test('免费商品保留角色编辑器和战争地带名称，不继承同概念付费本体',()=>{
+ const rows=[
+  {...game("Dragon's Dogma 2",'PS5',100,'paid-dd'),conceptId:'dd'},
+  {...game('Dragon&#x27;s Dogma 2 角色编辑＆保存','PS5',0,'creator'),conceptId:'dd'},
+  {...game('Call of Duty Modern Warfare 4','PS5',100,'paid-cod'),conceptId:'cod'},
+  {...game('使命召唤®：战争地带™','PS5',0,'warzone'),conceptId:'cod'}];
+ const groups=context.groupPs5Games(rows);
+ assert.equal(groups.find(g=>g.freeGame?.id==='creator').freeGame.cn,"Dragon's Dogma 2 角色编辑＆保存");
+ assert.equal(groups.find(g=>g.freeGame?.id==='warzone').freeGame.cn,'使命召唤®：战争地带™');
+ assert.ok(groups.find(g=>g.id==='paid-cod').name.includes('现代战争'));
+});
+
 test('display numbering retains overall ranks through sorting, search and pagination', () => {
   const rows = Array.from({ length: 60 }, (_, i) => ({ ...game(`Game ${i}`, 'PS5', 60 - i, `g${i}`, i * 3 + 7), cn: '', meta: '' }));
   const state = { platform: 'ps5', psStore: 'hk', view: 'ranking', sort: 'default', page: 2, query: '' };
