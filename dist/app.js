@@ -5533,8 +5533,16 @@ function groupPs5Games(rawGames, limit = null, isJp = false) {
     const bestOld = effectiveEditions.map(e => e.old).filter(Boolean);
     const maxOld = bestOld.length ? Math.max(...bestOld) : null;
     const isDemoEdition = freeEdition && isPsDemoGame(freeEdition);
-    const freeName = isDemoEdition ? `${grp.baseName} Demo` : /\bLite\b/i.test(freeEdition?.name || '') ? freeEdition.name : grp.baseName;
-    const freeCn = isDemoEdition ? `${grp.cn || grp.baseName} Demo` : /\bLite\b/i.test(freeEdition?.name || '') ? freeEdition.cn : (grp.cn || grp.baseName);
+    // 免费商品独立命名，不能用同概念的付费本体名称覆盖角色编辑器、战争地带等商品。
+    const freeProductName=stripLanguageParentheses(freeEdition?.name || freeEdition?.rawName || grp.baseName)
+      .replace(/&#(?:x27|39);|&apos;/gi,"'").replace(/&amp;/gi,'&');
+    const isCharacterCreator=/Character Creator|角色编辑|角色編輯|创建.*角色|創建.*角色/i.test(freeProductName);
+    const isWarzone=/Warzone|战争地带|戰爭地帶/i.test(freeProductName);
+    const freeName = freeProductName;
+    const freeCn = isCharacterCreator && /Dragon['’]s Dogma 2/i.test(freeProductName)
+      ? "Dragon's Dogma 2 角色编辑＆保存"
+      : isWarzone ? '使命召唤®：战争地带™'
+      : (freeEdition?.cn || freeProductName);
     const freeGame = freeEdition ? {
       ...freeEdition,
       id: freeEdition.id,
