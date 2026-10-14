@@ -4993,6 +4993,10 @@ function normalizePsGame(g, i) {
   return {
     id,
     conceptId: g.conceptId,
+    isDemo: g.isDemo,
+    productType: g.productType,
+    productCategory: g.productCategory,
+    storeDisplayClassification: g.storeDisplayClassification,
     hasChinese: Boolean(g.hasChinese),
     rawName: g.rawName || g.name || '',
     rank: g.rank || (i + 1),
@@ -5432,6 +5436,15 @@ function translateEditionBadge(ed) {
   return clean;
 }
 
+function isPsDemoGame(game) {
+  if(game.isDemo === true)return true;
+  const types=[game.productType,game.gameType,game.productCategory,game.category,game.storeDisplayClassification].filter(value=>typeof value==='string');
+  if(types.some(value=>/^(?:demo|trial|game[_ ]demo|试玩版|試玩版|体験版)$/i.test(value)))return true;
+  // 使用原始商品和版本资料；免费价格本身不能证明这是试玩版。
+  return /\b(?:demo|trial(?: version)?)\b|试玩版|試玩版|体验版|體驗版|体験版|體驗版本|体验版本|デモ版/i.test(
+    [game.rawName,game.name,game.editionName,game.editionBadge].filter(Boolean).join(' '));
+}
+
 function groupPs5Games(rawGames, limit = null, isJp = false) {
   const groups = new Map();
 
@@ -5445,11 +5458,12 @@ function groupPs5Games(rawGames, limit = null, isJp = false) {
     const game = rawGames[i];
     // 商品名字中的明确版本标记优先于特殊游戏名称的解析，避免捆绑包被误标为标准版。
     const productName = String(game.name || game.rawName || '').normalize('NFKC');
-    if (/\b(?:Bundle|Upgrade|DLC|Demo|Trial)\b|\b(?:Premium(?:\s+Plus|\s+Deluxe)?|Digital\s+Deluxe|Deluxe|Ultimate|Gold|Aviator|Trilogy|Complete|GOTY)\s+Edition\b|\b(?:Starter|Expansion|Texture)\s+Pack\b|High[ -]res\s+Texture|The Old Hunters Edition|捆绑包|捆綁包|組合包|组合包|同捆包|豪华|豪華|高级版|高級版|精英版|传奇版|傳奇版|年度版|超级公民版|超級公民版|升级包|升級包|追加内容|追加內容|好友通行证|好友通行證|体验版|體驗版|体験版|试玩版|試玩版/i.test(productName)) continue;
+    const isDemo = isPsDemoGame(game);
+    if (!isDemo && /\b(?:Bundle|Upgrade|DLC|Demo|Trial)\b|\b(?:Premium(?:\s+Plus|\s+Deluxe)?|Digital\s+Deluxe|Deluxe|Ultimate|Gold|Aviator|Trilogy|Complete|GOTY)\s+Edition\b|\b(?:Starter|Expansion|Texture)\s+Pack\b|High[ -]res\s+Texture|The Old Hunters Edition|捆绑包|捆綁包|組合包|组合包|同捆包|豪华|豪華|高级版|高級版|精英版|传奇版|傳奇版|年度版|超级公民版|超級公民版|升级包|升級包|追加内容|追加內容|好友通行证|好友通行證|体验版|體驗版|体験版|试玩版|試玩版/i.test(productName)) continue;
     const { base, edition, lang } = extractBaseGame(game.name || game.rawName);
-    const groupKey = game.conceptId ? `concept:${game.conceptId}` : canonicalGroupKey(base);
+    const groupKey = (game.conceptId ? `concept:${game.conceptId}` : canonicalGroupKey(base)) + (isDemo ? ":demo" : "");
     const langInfo = isJp ? null : getLanguageTag(game, lang);
-    const editionBase = (game.price === 0 || game.isFree) ? '免费游玩' : (isJp ? translateEditionBadge(edition || '标准版') : (edition || (isJp ? '通常版' : '标准版')));
+    const editionBase = isDemo ? 'Demo' : (game.price === 0 || game.isFree) ? '免费游玩' : (isJp ? translateEditionBadge(edition || '标准版') : (edition || (isJp ? '通常版' : '标准版')));
     const finalEdition = langInfo ? `${editionBase} (${langInfo.label})` : editionBase;
     const baseCn = chineseTitleMap[base] || (base === game.name ? (chineseTitleMap[game.name] || game.cn) : base) || base;
 
@@ -5482,6 +5496,7 @@ function groupPs5Games(rawGames, limit = null, isJp = false) {
       const editionCn = chineseTitleMap[game.name] || game.cn || game.name;
       grp.editions.push({
         ...game,
+        isDemo,
         cn: editionCn,
         editionBadge: isJp ? translateEditionBadge(editionBase) : editionBase,
         editionName: finalEdition,
@@ -5517,7 +5532,7 @@ function groupPs5Games(rawGames, limit = null, isJp = false) {
     const bestDealEdition = effectiveEditions.find(e => e.discount === maxDiscount) || primaryEdition;
     const bestOld = effectiveEditions.map(e => e.old).filter(Boolean);
     const maxOld = bestOld.length ? Math.max(...bestOld) : null;
-    const isDemoEdition = freeEdition && /\b(?:Demo|Trial)\b|体验版|體驗版|体験版|试玩版|試玩版/i.test(`${freeEdition.name || ''} ${freeEdition.rawName || ''} ${freeEdition.editionName || ''}`);
+    const isDemoEdition = freeEdition && isPsDemoGame(freeEdition);
     const freeName = isDemoEdition ? `${grp.baseName} Demo` : /\bLite\b/i.test(freeEdition?.name || '') ? freeEdition.name : grp.baseName;
     const freeCn = isDemoEdition ? `${grp.cn || grp.baseName} Demo` : /\bLite\b/i.test(freeEdition?.name || '') ? freeEdition.cn : (grp.cn || grp.baseName);
     const freeGame = freeEdition ? {
@@ -6617,7 +6632,7 @@ function renderRow(g) {
               ${(state.platform.startsWith('switch') || g.platform?.startsWith('Switch') || g.meta === '数字版' || (g.meta && g.meta.includes('下载版')))
                 ? `<span class="edition-badge">数字版</span>`
                 : (isPs && isFreeView
-                  ? (/\b(?:Demo|Trial)\b|体验版|體驗版|体験版|试玩版|試玩版/i.test(`${g.name || ''} ${g.rawName || ''} ${g.editionName || ''} ${g.editionBadge || ''}`) ? '<span class="edition-badge">Demo</span>' : '')
+                  ? (isPsDemoGame(g) ? '<span class="edition-badge">Demo</span>' : '')
                   : (g.editionBadge ? `<span class="edition-badge">${escapeHtml(g.editionBadge)}</span>` : (isPsJp() ? '' : (g.meta ? `<span class="game-meta">${g.meta}</span>` : ''))))}
               ${g.hasChinese ? `<span class="lang-chip lang-zh">支持中文</span>` : ''}
               ${mobileGameActions(g)}
