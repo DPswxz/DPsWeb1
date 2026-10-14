@@ -664,3 +664,8 @@ select[hidden]{display:none!important}
 /* 顶部品牌与标签页使用同款手柄轮廓，品牌颜色跟随主题。 */
 .brand .brand-mark{display:block;padding:0;border:0;background:none;color:var(--mint);flex:none}
 .brand-mark svg{display:block;width:100%;height:100%}
+
+/* 档案搜索采用主题聚焦边框，覆盖浏览器原生的深色外圈。 */
+.archive-filters input{appearance:none;border-color:var(--line);background:var(--panel2);transition:border-color .2s,box-shadow .2s}
+.archive-filters input:focus{outline:none;border-color:rgba(var(--accent-rgb),.45);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.035)}
+.archive-filters input:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
