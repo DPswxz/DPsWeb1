@@ -5532,6 +5532,7 @@ function groupPs5Games(rawGames, limit = null, isJp = false) {
       cover: freeEdition.cover || grp.cover,
       color: freeEdition.color || grp.color,
       isFree: true,
+      editionBadge: isDemoEdition ? 'Demo' : '',
       price: 0,
       discount: 0,
       old: null,
@@ -6615,7 +6616,9 @@ function renderRow(g) {
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px">
               ${(state.platform.startsWith('switch') || g.platform?.startsWith('Switch') || g.meta === '数字版' || (g.meta && g.meta.includes('下载版')))
                 ? `<span class="edition-badge">数字版</span>`
-                : (g.editionBadge ? `<span class="edition-badge">${escapeHtml(g.editionBadge)}</span>` : (isPsJp() ? '' : (g.meta ? `<span class="game-meta">${g.meta}</span>` : '')))}
+                : (isPs && isFreeView
+                  ? (/\b(?:Demo|Trial)\b|体验版|體驗版|体験版|试玩版|試玩版/i.test(`${g.name || ''} ${g.rawName || ''} ${g.editionName || ''} ${g.editionBadge || ''}`) ? '<span class="edition-badge">Demo</span>' : '')
+                  : (g.editionBadge ? `<span class="edition-badge">${escapeHtml(g.editionBadge)}</span>` : (isPsJp() ? '' : (g.meta ? `<span class="game-meta">${g.meta}</span>` : ''))))}
               ${g.hasChinese ? `<span class="lang-chip lang-zh">支持中文</span>` : ''}
               ${mobileGameActions(g)}
             </div>
