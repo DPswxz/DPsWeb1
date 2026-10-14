@@ -21,27 +21,28 @@
       const open = themeMenu.hidden;
       themeMenu.hidden = !open;
       themeButton.setAttribute('aria-expanded', String(open));
-      if (open) choices.find(button => button.getAttribute('aria-checked') === 'true')?.focus();
+      if (open && finePointer.matches) choices.find(button => button.getAttribute('aria-checked') === 'true')?.focus({preventScroll:true});
     });
     choices.forEach(button => button.addEventListener('click', () => {
       applyTheme(button.dataset.theme);
       try { localStorage.setItem('game-pulse-theme', button.dataset.theme); } catch {}
       closeTheme();
-      themeButton.focus();
+      themeButton.focus({preventScroll:true});
     }));
     document.addEventListener('click', event => {
       if (!event.target.closest('.theme-control')) closeTheme();
     });
     themeMenu.addEventListener('keydown', event => {
-      if (event.key === 'Escape') { closeTheme(); themeButton.focus(); }
+      if (event.key === 'Escape') { closeTheme(); themeButton.focus({preventScroll:true}); }
       if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
         event.preventDefault();
         const index = choices.indexOf(document.activeElement);
-        choices[event.key === 'Home' ? 0 : event.key === 'End' ? choices.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + choices.length) % choices.length].focus();
+        choices[event.key === 'Home' ? 0 : event.key === 'End' ? choices.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + choices.length) % choices.length].focus({preventScroll:true});
       }
     });
     themeMenu.addEventListener('focusout', event => {
-      if (!event.relatedTarget?.closest('.theme-control')) closeTheme();
+      // 触屏浏览器切换焦点时可能不给出目标，不能在选项 click 前关闭菜单。
+      if (event.relatedTarget && !event.relatedTarget.closest('.theme-control')) closeTheme();
     });
   }
   // 保留原 select 的事件接口，用自定义菜单呈现交互。
@@ -76,7 +77,7 @@
         select.value = option.value;
         select.dispatchEvent(new Event('change', { bubbles: true }));
         close();
-        trigger.focus();
+        trigger.focus({preventScroll:true});
       });
       menu.append(button);
       return button;
@@ -88,7 +89,10 @@
       active = (index + options.length) % options.length;
       options.forEach((option, i) => option.classList.toggle('is-active', i === active));
       trigger.setAttribute('aria-activedescendant', options[active].id);
-      options[active].scrollIntoView({block:'nearest'});
+      // 仅滚动选项容器，避免 scrollIntoView 连带滚动手机页面和档案弹窗。
+      const option=options[active],top=option.offsetTop,bottom=top+option.offsetHeight;
+      if(top<menu.scrollTop)menu.scrollTop=top;
+      else if(bottom>menu.scrollTop+menu.clientHeight)menu.scrollTop=bottom-menu.clientHeight;
     };
     const update = () => {
       trigger.textContent = select.selectedOptions[0]?.textContent || '';
@@ -120,7 +124,7 @@
     });
     document.addEventListener('click', event => { if (!wrapper.contains(event.target)) close(); });
     document.addEventListener('dropdown-open', event => { if(event.detail!==wrapper) close(); });
-    wrapper.addEventListener('focusout', event => { if(!wrapper.contains(event.relatedTarget)) close(); });
+    wrapper.addEventListener('focusout', event => { if(event.relatedTarget&&!wrapper.contains(event.relatedTarget)) close(); });
     select.addEventListener('change', update);
     select.before(wrapper);
     wrapper.append(trigger, menu);
