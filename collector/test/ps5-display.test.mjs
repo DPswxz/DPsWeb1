@@ -22,6 +22,20 @@ function game(name, platform, price, id, rank = 1) {
   return { id, name, rawName: name, platform, price, rank, image: `${id}.png`, url: `https://example.com/${id}` };
 }
 
+test('试玩版保留并根据原始名称或商品类型标记Demo，普通免费游戏不误判',()=>{
+  const rows=[game('Street Fighter 6 Demo','PS5',0,'demo'),
+    {...game('试玩游戏','PS5',0,'raw'),rawName:'Test 体験版'},
+    {...game('Game','PS5',0,'type'),productType:'DEMO'},
+    game('原神','PS5',0,'free'),game('Street Fighter 6','PS5',100,'paid')];
+  const result=context.groupPs5Games(rows);
+  for(const id of ['demo','raw','type']){
+    const entry=result.find(g=>g.id===id);assert.ok(entry,`${id}未被过滤`);
+    assert.equal(entry.freeGame.editionBadge,'Demo');
+  }
+  assert.equal(result.find(g=>g.id==='free').freeGame.editionBadge,'');
+  assert.ok(result.find(g=>g.id==='paid').price>0);
+});
+
 test('display numbering retains overall ranks through sorting, search and pagination', () => {
   const rows = Array.from({ length: 60 }, (_, i) => ({ ...game(`Game ${i}`, 'PS5', 60 - i, `g${i}`, i * 3 + 7), cn: '', meta: '' }));
   const state = { platform: 'ps5', psStore: 'hk', view: 'ranking', sort: 'default', page: 2, query: '' };
