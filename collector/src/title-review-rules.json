@@ -1,6 +1,15 @@
 [
   {
     "aliases": [
+      "Fire Emblem Engage",
+      "ファイアーエムブレム エンゲージ"
+    ],
+    "cn": "火焰之纹章 结合",
+    "kind": "user-preference",
+    "source": "user-request"
+  },
+  {
+    "aliases": [
       "Palworld",
       "Palworld / 幻兽帕鲁",
       "Palworld / パルワールド"

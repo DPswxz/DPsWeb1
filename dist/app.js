@@ -1,4 +1,6 @@
 const chineseTitleMap = new Proxy({
+  "Fire Emblem Engage": "火焰之纹章 结合",
+  "ファイアーエムブレム エンゲージ": "火焰之纹章 结合",
   "Stray": "迷失",
   "Figment": "虚构世界",
   "Figment 2": "虚构世界2",
