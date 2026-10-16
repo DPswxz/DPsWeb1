@@ -40,6 +40,8 @@ test('日服榜单补充译名覆盖旧缓存，前端与服务器一致且不�
     apiKey: 'test', fetchImpl: () => { throw new Error('应使用核对译名'); }
   });
   const cases = [
+    ['Fire Emblem Engage (ファイアーエムブレム エンゲージ)', '火焰之纹章 结合'],
+    ['Fire Emblem Engage（ファイアーエムブレム エンゲージ）', '火焰之纹章 结合'],
     ['ポケットモンスター ソード', '宝可梦 剑'],
     ['アルセウス', '宝可梦传说 阿尔宙斯'],
     ['Pokémon LEGENDS アルセウス', '宝可梦传说 阿尔宙斯'],
