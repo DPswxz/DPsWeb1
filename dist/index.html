@@ -7,6 +7,8 @@
   <meta name="theme-color" content="#101822" />
   <meta name="description" content="追踪 Nintendo Switch 日服与港服、Steam 热销榜及 PlayStation 商店价格。" />
   <title>GAME PULSE · 游戏价格观测站</title>
+  <link rel="preload" href="nintendo-data.js?v=6dcde7984a792575a49b" as="script">
+  <link rel="preload" href="app.js?v=6dcde7984a792575a49b" as="script">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
@@ -124,7 +126,7 @@
         <div class="table-scroll">
           <table>
             <thead><tr><th class="rank-col">排名</th><th>游戏</th><th>平台</th><th>价格</th><th class="col-history">历史价格</th><th></th></tr></thead>
-            <tbody id="gameRows"></tbody>
+            <tbody id="gameRows"><tr><td colspan="6" role="status" style="padding:32px">正在载入 Switch 榜单…</td></tr></tbody>
           </table>
         </div>
         <div id="emptyState" class="empty-state" hidden>
@@ -298,10 +300,6 @@
   <div class="toast" id="toast" role="status" aria-live="polite"><span>✓</span><div><b>刷新完成</b><small></small></div></div>
   <script src="config.js?v=6dcde7984a792575a49b"></script>
   <script src="nintendo-data.js?v=6dcde7984a792575a49b"></script>
-  <script src="ps5-data.js?v=6dcde7984a792575a49b"></script>
-  <script src="ps5-jp-data.js?v=6dcde7984a792575a49b"></script>
-  <script src="steam-data.js?v=6dcde7984a792575a49b"></script>
-  <script src="steam-global-data.js?v=6dcde7984a792575a49b"></script>
   <script src="update-client.js?v=6dcde7984a792575a49b"></script>
   <script src="cover-cache.js?v=6dcde7984a792575a49b"></script>
   <script src="app.js?v=6dcde7984a792575a49b"></script>

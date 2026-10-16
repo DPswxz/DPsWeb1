@@ -1,5 +1,7 @@
 const chineseTitleMap = new Proxy({
   "Fire Emblem Engage": "火焰之纹章 结合",
+  "Fire Emblem Engage (ファイアーエムブレム エンゲージ)": "火焰之纹章 结合",
+  "Fire Emblem Engage（ファイアーエムブレム エンゲージ）": "火焰之纹章 结合",
   "ファイアーエムブレム エンゲージ": "火焰之纹章 结合",
   "Stray": "迷失",
   "Figment": "虚构世界",
@@ -5636,74 +5638,39 @@ function preparePsJpDatasets(rawList) {
 }
 
 const PS5_STORAGE_KEY = 'game-pulse-ps5-v10';
-try {
-  // 彻底清理历史缓存
-  localStorage.removeItem('game-pulse-ps5');
-  localStorage.removeItem('game-pulse-ps5-v2');
-  localStorage.removeItem('game-pulse-ps5-v3');
-  localStorage.removeItem('game-pulse-ps5-v4');
-  localStorage.removeItem('game-pulse-ps5-v5');
-  localStorage.removeItem('game-pulse-ps5-v6');
-  localStorage.removeItem('game-pulse-ps5-v7');
-  localStorage.removeItem('game-pulse-ps5-v8');
-  localStorage.removeItem('game-pulse-ps5-v9');
-} catch {}
-
-const savedPs5 = (() => {
-  try {
-    const cached = JSON.parse(localStorage.getItem(PS5_STORAGE_KEY));
-    if (cached?.games?.some(g => g.image && g.image.includes('e0364b3089bbbad7e0a04f87cab6c273172515a134efdf88'))) {
-      localStorage.removeItem(PS5_STORAGE_KEY);
-      return null;
-    }
-    return cached;
-  } catch { return null; }
-})();
-
-preparePsDatasets(savedPs5?.games?.length ? savedPs5.games : (window.PS5_HK_GAMES || window.PS5_GAMES || []));
-let ps5Status = savedPs5?.status || {
-  count: datasets.ps5.length,
-  officialLimit: 200,
-  updatedAt: new Date().toISOString(),
-  stale: !savedPs5,
-  sourceType: 'PlayStation Store 港服官方'
-};
-
 const PS5_JP_STORAGE_KEY = 'game-pulse-ps5-jp-v1';
-const savedPs5Jp = (() => {
-  try { return JSON.parse(localStorage.getItem(PS5_JP_STORAGE_KEY)); } catch { return null; }
-})();
-preparePsJpDatasets(savedPs5Jp?.games?.length ? savedPs5Jp.games : (window.PS5_JP_GAMES || []));
-let ps5JpStatus = savedPs5Jp?.status || {
-  count: datasets.ps5_jp.length,
-  officialLimit: 200,
-  updatedAt: new Date().toISOString(),
-  stale: !savedPs5Jp,
-  sourceType: 'PlayStation Store 日服官方'
-};
+let ps5Status = {count:0,officialLimit:200,updatedAt:null,stale:true,sourceType:'PlayStation Store 港服官方'};
+let ps5JpStatus = {count:0,officialLimit:200,updatedAt:null,stale:true,sourceType:'PlayStation Store 日服官方'};
+let steamStatus = {count:0,officialLimit:200,updatedAt:null,stale:true,sourceType:'Steam 官方热销榜'};
+let steamGlobalStatus = {count:0,officialLimit:100,updatedAt:null,stale:true,sourceType:'Steam 官方全球热销榜'};
+preparePsDatasets([]);
+preparePsJpDatasets([]);
+datasets.steam = [];
+datasets.steam_global = [];
 
-const savedSteam = (() => {
-  try { return JSON.parse(localStorage.getItem('game-pulse-steam')); } catch { return null; }
-})();
-datasets.steam = (savedSteam?.games?.length ? savedSteam.games : (window.STEAM_CN_GAMES || [])).map(normalizeSteamGame);
-let steamStatus = savedSteam?.status || {
-  count: datasets.steam.length,
-  officialLimit: 200,
-  updatedAt: new Date().toISOString(),
-  stale: !savedSteam,
-  sourceType: 'Steam 官方热销榜'
-};
-const savedSteamGlobal = (() => {
-  try { return JSON.parse(localStorage.getItem('game-pulse-steam-global')); } catch { return null; }
-})();
-datasets.steam_global = (savedSteamGlobal?.games?.length ? savedSteamGlobal.games : (window.STEAM_GLOBAL_GAMES || [])).map(normalizeSteamGame);
-let steamGlobalStatus = savedSteamGlobal?.status || {
-  count: datasets.steam_global.length,
-  officialLimit: 100,
-  updatedAt: null,
-  stale: true,
-  sourceType: 'Steam 官方全球热销榜'
-};
+// 大平台的本地缓存也留到首屏绘制之后解析和整理。
+function restorePlatformCache(key) {
+  const storageKeys = {ps5:PS5_STORAGE_KEY,ps5_jp:PS5_JP_STORAGE_KEY,steam:'game-pulse-steam',steam_global:'game-pulse-steam-global'};
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKeys[key]));
+    if (!saved?.games?.length) return;
+    if (key === 'ps5') {
+      if (saved.games.some(g => g.image?.includes('e0364b3089bbbad7e0a04f87cab6c273172515a134efdf88'))) {
+        localStorage.removeItem(PS5_STORAGE_KEY);
+        return;
+      }
+      preparePsDatasets(saved.games);
+      ps5Status = {...ps5Status,...saved.status,stale:true};
+    } else if (key === 'ps5_jp') {
+      preparePsJpDatasets(saved.games);
+      ps5JpStatus = {...ps5JpStatus,...saved.status,stale:true};
+    } else {
+      datasets[key] = saved.games.map(normalizeSteamGame);
+      if (key === 'steam') steamStatus = {...steamStatus,...saved.status,stale:true};
+      else steamGlobalStatus = {...steamGlobalStatus,...saved.status,stale:true};
+    }
+  } catch {}
+}
 
 function formatSourceTime(isoStr) {
   if (!isoStr) return '';
@@ -5833,6 +5800,7 @@ async function fetchNintendoRanking(platform,{force=false}={}){
 }
 
 async function fetchPs5Ranking({force=false}={}){
+  await loadPlatformSnapshot('ps5');
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),force?120000:15000);
   try{
     const url=`${apiBase}/api/ps5/rankings${force?'?refresh=1':''}`;
@@ -5859,6 +5827,7 @@ async function fetchPs5Ranking({force=false}={}){
 }
 
 async function fetchPs5JpRanking({force=false}={}){
+  await loadPlatformSnapshot('ps5_jp');
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),force?40000:15000);
   try{
     const url=`${apiBase}/api/ps5-jp/rankings${force?'?refresh=1':''}`;
@@ -5884,6 +5853,7 @@ async function fetchPs5JpRanking({force=false}={}){
 async function fetchSteamRanking({force=false,region='cn'}={}){
   const global=region==='global';
   const key=global?'steam_global':'steam';
+  await loadPlatformSnapshot(key);
   const storageKey=global?'game-pulse-steam-global':'game-pulse-steam';
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),force?40000:15000);
   try{
@@ -6774,6 +6744,9 @@ function render(){
       if (state.query) {
         emptyH3.textContent = '没有找到匹配的游戏';
         emptyP.textContent = '换个关键词试试看。';
+      } else if (!startupDataReady && !all.length && !isNintendo) {
+        emptyH3.textContent = '正在加载游戏榜单';
+        emptyP.textContent = '当前平台的数据加载完成后会自动显示。';
       } else if (state.view === 'free') {
         emptyH3.textContent = '当前平台暂无免费榜单游戏';
         emptyP.textContent = '可切换至「付费排行」或「仅看折扣」查看热门特惠。';
@@ -7154,24 +7127,63 @@ async function syncGameTitles(){
   }catch{}finally{syncingGameTitles=false;}
 }
 setInterval(syncGameTitles,30000);
-syncGameTitles();
+
+// 首屏只依赖 Nintendo 快照。其他平台在首帧之后加载，各自完成后立即显示。
+const platformSnapshotLoads = new Map();
+function loadPlatformSnapshot(key) {
+  if (platformSnapshotLoads.has(key)) return platformSnapshotLoads.get(key);
+  restorePlatformCache(key);
+  if (datasets[key]?.length) {
+    const task = Promise.resolve();
+    platformSnapshotLoads.set(key, task);
+    render();
+    return task;
+  }
+  const files = {ps5:'ps5-data.js',ps5_jp:'ps5-jp-data.js',steam:'steam-data.js',steam_global:'steam-global-data.js'};
+  const task = new Promise(resolve => {
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { script.remove(); resolve(); }, 10000);
+    const version = document.querySelector('meta[name="game-pulse-version"]')?.content;
+    script.src = files[key] + (version ? `?v=${encodeURIComponent(version)}` : '');
+    script.onload = () => {
+      clearTimeout(timer);
+      // 已有缓存或联网新数据时，不用随站点发布的旧快照覆盖。
+      if (!(datasets[key]?.length)) {
+        if (key === 'ps5') preparePsDatasets(window.PS5_HK_GAMES || window.PS5_GAMES || []);
+        else if (key === 'ps5_jp') preparePsJpDatasets(window.PS5_JP_GAMES || []);
+        else datasets[key] = (key === 'steam' ? window.STEAM_CN_GAMES || [] : window.STEAM_GLOBAL_GAMES || []).map(normalizeSteamGame);
+      }
+      render();
+      resolve();
+    };
+    script.onerror = () => { clearTimeout(timer); resolve(); };
+    document.head.append(script);
+  });
+  platformSnapshotLoads.set(key, task);
+  return task;
+}
+
+async function loadOtherPlatform(key) {
+  await loadPlatformSnapshot(key);
+  if (key === 'ps5') await fetchPs5Ranking();
+  else if (key === 'ps5_jp') await fetchPs5JpRanking();
+  else await fetchSteamRanking({region:key === 'steam_global' ? 'global' : 'cn'});
+  render();
+}
 
 render();
-hydrateCovers();
-fetchExchangeRates().then(()=>render()).catch(error=>console.warn('汇率刷新失败：',error));
-Promise.all([
-  fetchPriceHistories().catch(error => console.warn(error.message)),
-  fetchNintendoRanking('switch1'),
-  fetchNintendoRanking('switch2'),
-  fetchNintendoRanking('switch1_hk'),
-  fetchNintendoRanking('switch2_hk'),
-  fetchPs5Ranking(),
-  fetchPs5JpRanking(),
-  fetchSteamRanking(),
-  fetchSteamRanking({region:'global'})
-]).then(async()=>{
-  startupDataReady = true;
-  preloadGameCovers();
-  await scheduleNextRefresh();
-  render();
-});
+// 双帧让浏览器先绘制 Switch 游戏，再开始其他平台和辅助请求。
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  hydrateCovers();
+  syncGameTitles();
+  fetchExchangeRates().then(()=>render()).catch(error=>console.warn('汇率刷新失败：',error));
+  const rankings = ['switch1','switch2','switch1_hk','switch2_hk'].map(platform =>
+    fetchNintendoRanking(platform).then(() => render()));
+  const others = ['ps5','ps5_jp','steam','steam_global'].map(loadOtherPlatform);
+  Promise.allSettled([...rankings,...others]).then(async () => {
+    startupDataReady = true;
+    preloadGameCovers();
+    await scheduleNextRefresh();
+    render();
+  });
+}));
