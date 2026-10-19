@@ -669,3 +669,16 @@ select[hidden]{display:none!important}
 .archive-filters input{appearance:none;border-color:var(--line);background:var(--panel2);transition:border-color .2s,box-shadow .2s}
 .archive-filters input:focus{outline:none;border-color:rgba(var(--accent-rgb),.45);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.035)}
 .archive-filters input:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+
+/* 主榜内容顺序：游戏、价格、历史走势、商店；序号独立保留。 */
+.table-card>.table-scroll>table>thead>tr>th:nth-child(3),
+.table-card #gameRows>tr:not(.edition-drawer-row)>td:nth-child(3){display:none!important}
+@media(min-width:561px){
+.table-card>.table-scroll>table>thead>tr>th:nth-child(2){width:48%}
+.table-card>.table-scroll>table>thead>tr>th:nth-child(4){width:140px}
+.table-card>.table-scroll>table>thead>tr>th.col-history{width:auto}
+#gameRows>tr:not(.edition-drawer-row)>td:nth-child(5):not(:last-child) .spark-cell{width:100%;min-width:0}
+#gameRows>tr:not(.edition-drawer-row)>td:nth-child(5):not(:last-child) .mini-sparkline{width:100%;max-width:none;flex:none}
+#gameRows .mini-sparkline path,#gameRows .mini-sparkline line{vector-effect:non-scaling-stroke}
+@container(max-width:600px){.table-card>.table-scroll>table>thead>tr>th:nth-child(2){width:auto}}
+}

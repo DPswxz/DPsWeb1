@@ -6109,10 +6109,10 @@ function snapPriceChartPoint(model, fraction) {
 function renderMiniSparklineSvg(history) {
   const model = buildPriceChartModel(history || []);
   if (!model) {
-    return `<svg class="mini-sparkline" viewBox="0 0 72 16"><line x1="2" y1="8" x2="70" y2="8" stroke="#31524b" stroke-width="1.8" stroke-dasharray="3 3"/></svg>`;
+    return `<svg class="mini-sparkline" viewBox="0 0 72 16" preserveAspectRatio="none"><line x1="2" y1="8" x2="70" y2="8" stroke="#31524b" stroke-width="1.8" stroke-dasharray="3 3"/></svg>`;
   }
   const { solid,dashed } = priceChartPath(model, 2, 70, 1, 15);
-  return `<svg class="mini-sparkline" viewBox="0 0 72 16"><path d="${solid}" fill="none" stroke="var(--mint)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="${dashed}" fill="none" stroke="var(--mint)" stroke-width="1.8" stroke-dasharray="3 3"/></svg>`;
+  return `<svg class="mini-sparkline" viewBox="0 0 72 16" preserveAspectRatio="none"><path d="${solid}" fill="none" stroke="var(--mint)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="${dashed}" fill="none" stroke="var(--mint)" stroke-width="1.8" stroke-dasharray="3 3"/></svg>`;
 
 }
 
