@@ -4,12 +4,14 @@ import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 const source=await readFile(new URL('../../dist/cover-cache.js',import.meta.url),'utf8');
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-function client(records,fetcher,{images=[],stalled=false}={}){
+function client(records,fetcher,{images=[],stalled=false,viewport=false}={}){
  const data=new Map(records.map(record=>[record.url,record]));
  const database={transaction(){const tx={};tx.objectStore=()=>({get(url){const request={};if(!stalled)setTimeout(()=>{request.result=data.get(url);request.onsuccess?.();},0);return request;},put(record){data.set(record.url,record);setTimeout(()=>tx.oncomplete?.(),0);},clear(){data.clear();setTimeout(()=>tx.oncomplete?.(),0);}});return tx;}};
  class ObjectURL extends URL {static createObjectURL(){return 'blob:test-'+Math.random();}static revokeObjectURL(){}}
  const window={},context={window,URL:ObjectURL,location:{protocol:'https:',origin:'https://radar.test',href:'https://radar.test/'},document:{documentElement:{},querySelectorAll:()=>images},MutationObserver:class{observe(){}disconnect(){}},indexedDB:{open(){const request={};setTimeout(()=>{request.result=database;request.onsuccess?.();},0);return request;}},fetch:fetcher,AbortSignal,setTimeout,clearTimeout};
- vm.runInNewContext(source,context);return {cache:window.GameCoverCache,data};
+  const observed=new Set();let notify;
+ if(viewport)context.IntersectionObserver=class{constructor(callback,options){notify=callback;assert.equal(options.rootMargin,'500px 0px');}observe(img){observed.add(img)}unobserve(img){observed.delete(img)}disconnect(){observed.clear()}};
+ vm.runInNewContext(source,context);return {cache:window.GameCoverCache,data,observed,intersect:img=>notify([{target:img,isIntersecting:true}])};
 }
 
 test('本地缓存读取卡住仍可下载，首次失败后自动重试并写入本地缓存',async()=>{
@@ -75,4 +77,23 @@ test('旧版港服代理缓存离线迁移到官方地址，后续读取不依�
  const {cache,data}=client([{url:proxy,blob:new Blob(['legacy']),checkedAt:Date.now()}],async()=>{calls++;throw Error('Offline');});
  const src=await cache.get(url);
  assert.equal(await cache.get(proxy),src);assert.ok(data.has(url));assert.equal(calls,0);
+});
+
+test('首屏只下载进入附近区域的封面，滚动后补图，不加载离屏整页',async()=>{
+ const images=Array.from({length:50},(_,i)=>({dataset:{coverUrl:`https://image.api.playstation.com/viewport${i}.jpg`},isConnected:true,closest:()=>null}));
+ const calls=[];
+ const {intersect,observed}=client([],async(endpoint,options)=>{assert.equal(options.cache,'default');calls.push(endpoint);return new Response(new Blob(['cover']),{headers:{'content-type':'image/jpeg'}});},{images,viewport:true});
+ await pause(20);assert.equal(calls.length,0);assert.equal(observed.size,50);
+ intersect(images[0]);for(let i=0;i<50&&!images[0].src;i++)await pause(5);
+ assert.match(images[0].src,/^blob:/);assert.equal(calls.length,1);assert.equal(images[1].src,undefined);
+ intersect(images[1]);for(let i=0;i<50&&!images[1].src;i++)await pause(5);
+ assert.match(images[1].src,/^blob:/);assert.equal(calls.length,2);
+});
+
+test('跨平台预加载封顶32张且只有两个预热任务同时运行',async()=>{
+ let active=0,maxActive=0,calls=0;
+ const {cache}=client([],async()=>{calls++;active++;maxActive=Math.max(active,maxActive);await pause(2);active--;return new Response(new Blob(['cover']),{headers:{'content-type':'image/jpeg'}});});
+ cache.preload(Array.from({length:1000},(_,i)=>`https://image.api.playstation.com/warm${i}.jpg`));
+ for(let i=0;i<250&&calls<32;i++)await pause(5);
+ await pause(30);assert.equal(calls,32);assert.ok(maxActive<=2);
 });

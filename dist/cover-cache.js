@@ -78,7 +78,8 @@
   }
   async function download(url,old,epoch) {
     const headers={};if(old?.etag)headers['If-None-Match']=old.etag;
-    const response=await fetch(imageEndpoint(url),{headers,cache:'no-store',signal:AbortSignal.timeout(12000)});
+    // 首次读取允许浏览器复用 HTTP 缓存；过期图片才向服务端验证。
+    const response=await fetch(imageEndpoint(url),{headers,cache:old?'no-cache':'default',signal:AbortSignal.timeout(20000)});
     if(epoch!==generation)throw new Error('Cache cleared');
     if(response.status===304&&old) {
       const record={url,blob:old.blob,etag:old.etag,checkedAt:Date.now()};
@@ -137,17 +138,26 @@
     const finished=()=>{pending.delete(url);foregroundPending.delete(url);pump();};
     task.then(finished,finished);return task;
   }
-  let preloadTimer;
+  let preloadTimer,preloadVersion=0;
   function preload(urls){
-    const unique=[...new Set(urls.filter(Boolean).map(coverKey))];
+    // 只预热少量跨平台封面，避免成千上万次 IndexedDB 读取挤占首屏。
+    const unique=[...new Set(urls.filter(Boolean).map(coverKey))].slice(0,32);
     clearTimeout(preloadTimer);
-    const epoch=generation;
+    const epoch=generation,version=++preloadVersion;
     preloadTimer=setTimeout(()=>{
       if(epoch!==generation)return;
-      unique.forEach((url,index)=>get(url,{priority:false,early:index<64}).catch(()=>{}));
+      let index=0;
+      const worker=async()=>{
+        while(epoch===generation&&version===preloadVersion&&index<unique.length){
+          const url=unique[index++];
+          await get(url,{priority:false,early:true}).catch(()=>{});
+        }
+      };
+      worker();worker();
     },600);
   }
   async function load(img,priority=true,attempt=0) {
+    if(!img.isConnected)return;
     try {const src=await get(img.dataset.coverUrl,{priority,dialog:Boolean(img.closest?.('.price-modal'))});if(img.isConnected)img.src=src;}
     catch {
       if(!img.isConnected)return;
@@ -155,6 +165,9 @@
       else img.src=img.dataset.coverUrl;
     }
   }
+  const nearby=typeof IntersectionObserver==='function'?new IntersectionObserver(entries=>{
+    for(const entry of entries)if(entry.isIntersecting){nearby.unobserve(entry.target);load(entry.target,true);}
+  },{rootMargin:'500px 0px'}):null;
   function bind(root=document) {
     const images=[...(root.matches?.('img[data-cover-url]')?[root]:[]),...root.querySelectorAll('img[data-cover-url]')];
     for(const img of images)if(!bound.has(img)){
@@ -162,15 +175,22 @@
       img.loading='eager';
       const key=coverKey(img.dataset.coverUrl),cached=memory.get(key);
       if(cached){img.src=cached.src;recheck(key,cached);}
+      else if(nearby&&!img.closest?.('.price-modal'))nearby.observe(img);
       else load(img,true);
     }
   }
   const observer=new MutationObserver(entries=>{
-    for(const entry of entries)for(const node of entry.addedNodes)
-      if(node.nodeType===1&&node.namespaceURI==='http://www.w3.org/1999/xhtml')bind(node);
+    for(const entry of entries){
+      for(const node of entry.removedNodes||[])if(node.nodeType===1){
+        if(node.matches?.('img[data-cover-url]'))nearby?.unobserve(node);
+        for(const img of node.querySelectorAll?.('img[data-cover-url]')||[])nearby?.unobserve(img);
+      }
+      for(const node of entry.addedNodes)
+        if(node.nodeType===1&&node.namespaceURI==='http://www.w3.org/1999/xhtml')bind(node);
+    }
   });
   async function clear() {
-    generation++;observer.disconnect();clearTimeout(preloadTimer);
+    generation++;preloadVersion++;observer.disconnect();nearby?.disconnect();clearTimeout(preloadTimer);
     for(const job of [...dialogs.splice(0),...urgent.splice(0),...warm.splice(0),...background.splice(0)])job.reject(new Error('Cache cleared'));
     const db=await open();await new Promise((resolve,reject)=>{
       const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).clear();
